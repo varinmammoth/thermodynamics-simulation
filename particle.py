@@ -72,3 +72,10 @@ class Ball():
         other._v = np.add(vec_v2_par_new, vec_v2_perp)
 
 # %%
+class Simulation():
+    def __init__(self, container, ball):
+        self._container = container
+        self._ball = ball
+
+    def next_collision(self):
+        

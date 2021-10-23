@@ -2,31 +2,67 @@
 """
 #%%
 import numpy as np
-import types
+import pylab as pl
 
 from numpy.core.numeric import Inf
 from numpy.lib.user_array import container
 
 class Ball():
     def __init__(self, m, r, p, v, type="ball"):
+        """Initialises Ball object with all the nessecary attributes.
+
+        Args:
+            m (float): Mass of the object.
+            r (float): Radius of the object.
+            p (list): Initial x, y coordinates of object in a list of length 2.
+            v (list): Initial x, y components of object's velocity in a list of length 2.
+            type (str, optional): Type of the object, either "ball" or "container". Defaults to "ball".
+        """
         self._type = "ball"
         self._m = m
         self._r = r
         self._p = np.array(p)[:].astype(np.float32)
         self._v = np.array(v)[:].astype(np.float32)
         self._type = type
-        self._patch = ""
+        if self._type == "ball":
+            self._patch = pl.Circle(self._p, self._r, fc='r', fill='True')
+        else:
+            self._patch = pl.Circle(self._p, self._r, fc='b', fill='False')
 
     def pos(self):
+        """Return current position of object.
+
+        Returns:
+            np.ndarray: Current position of object, in the form [x,y].
+        """
         return self._p
 
     def vel(self):
+        """Return current position of object.
+
+        Returns:
+            np.ndarray: Current velocity of object, in the form [vx, vy].
+        """
         return self._v
 
     def move(self, dt):
+        """Updates the position of object to it's position dt seconds later.   
+
+        Args:
+            dt (float): Object's position is updated to the position dt seconds later.
+        """
         self._p = np.add(self._p, dt*self._v)
+        self._patch = pl.Circle(self._p, self._r, fc='r', fill='True')
 
     def time_to_collision(self, other):
+        """Return the time to the next collision of self with another object of class Ball.
+
+        Args:
+            other (Ball): The other object self is colliding with.
+
+        Returns:
+            float: Time for self to collide with other. Returns None if objects do not collide.
+        """
         r = np.subtract(self._p, other._p)
         v = np.subtract(self._v, other._v)
 
@@ -54,6 +90,11 @@ class Ball():
         return get_t(R)
 
     def collide(self, other):
+        """Updates the velocities of self and other after they collide.
+
+        Args:
+            other (Ball): The other object self is colliding with.
+        """
         #the modulus of the component of v1 and v2 parallel to r,
         #the vector joining the center of two balls
         r = np.subtract(self._p, other._p)
@@ -86,7 +127,7 @@ class Ball():
         other._v = np.add(vec_v2_par_new, vec_v2_perp)
 
 # %%
-container = Ball(m=9999999, r=10, p=[0,0], v=[0,0], type="container")
+container = Ball(m=1e38, r=10, p=[0,0], v=[0,0], type="container")
 ball = Ball(m=1, r=1, p=[-5,0], v=[1,0])
 class Simulation():
     t = 0

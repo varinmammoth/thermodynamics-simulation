@@ -1,0 +1,50 @@
+#%%
+# %%
+import matplotlib.pyplot as plt
+
+
+plt.plot([1,2], [1,2])
+plt.show()
+# %%
+x = [1,2,3]
+y=[4,5,6]
+f, (ax1, ax2) = plt.subplots(1, 2, sharey=True)
+ax1.plot(x, y)
+ax1.set_title('Sharing Y axis')
+ax2.scatter(x, y)
+# %%
+fig1 = plt.figure(figsize=(7,2.5))
+ax1 = fig1.add_subplot(1,2,1)
+ax2 = fig1.add_subplot(1,2,2)
+ax1.plot(x,y,'.')
+ax2.plot(x,y,'x')
+ax1.set_xlabel('x')
+ax1.set_ylabel('y')
+ax2.set_xlabel('X')
+ax2.set_ylabel('Y')
+ax1.grid()
+fig1.suptitle('Title')
+
+# %%
+import pylab as pl
+
+f = pl.figure()
+patch1 = pl.Circle([0., 0.], 4, fc='r')
+patch2 = pl.Circle([5., 2.], 4, fc='b')
+ax = pl.axes(xlim=(-10, 10), ylim=(-10, 10))
+ax.add_patch(patch1)
+ax.add_patch(patch2)
+pl.show()
+
+# %%
+f = pl.figure()
+patch = pl.Circle([-4., -4.], 3, fc='r')
+ax = pl.axes(xlim=(-10, 10), ylim=(-10, 10))
+ax.add_patch(patch)
+
+pl.pause(1)
+patch.center = [4, 4]
+pl.pause(1)
+pl.show()
+
+# %%

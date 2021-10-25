@@ -1,3 +1,4 @@
+#%%
 import particle as p
 import matplotlib.pyplot as plt
 
@@ -6,7 +7,10 @@ plt.show()
 
 simulation = p.Simulation(p.container, p.ball2)
 
-frames = 100 #number of iterations
+frames = 200 #number of iterations
 
-simulation.run(frames, animate=True)
+simulation.run(frames, animate=False)
+plt.plot(simulation._timeArray,simulation._pressureArray)
+plt.show()
 
+# %%

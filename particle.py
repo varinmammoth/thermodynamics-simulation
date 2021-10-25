@@ -52,7 +52,6 @@ class Ball():
             dt (float): Object's position is updated to the position dt seconds later.
         """
         self._p = np.add(self._p, dt*self._v)
-        print(self._p)
         #updates patch
         self._patch.center = self._p
 
@@ -129,22 +128,49 @@ class Ball():
         other._v = np.add(vec_v2_par_new, vec_v2_perp)
 
     def get_patch(self):
+        """Returns patch of ball for animation.
+
+        Returns:
+            Pylab patch: Pylab patch of ball for animation.
+        """
         return self._patch
+
+    def kinetic(self):
+        return 0.5*self._m*(np.linalg.norm(self.vel())**2)
+
+    def momentum(self):
+        return self._m*(np.linalg.norm(self.vel()))
 # %%
 container = Ball(m=1e38, r=10, p=[0,0], v=[0,0], type="container")
 ball = Ball(m=1, r=1, p=[-5,0], v=[1,0])
-ball2 = Ball(m=1, r=1, p=[0,0], v=[1/np.sqrt(2),1/np.sqrt(2)])
+ball2 = Ball(m=1, r=1, p=[-6.708,-6.708], v=[1/np.sqrt(2),1/np.sqrt(2)])
+timeInterval = 50
 class Simulation():
-    t = 0
+    pressureCalculation = False
     def __init__(self, container, ball):
         self._container = container
         self._ball = ball
+        self._totalKE = self._ball.kinetic()
+        self._t = 0
+        
+        self._delta_p = 0 #change in momentume to calculate force
+        self._delta_t = 0   #change in time to calculate force
+        self._pressureArray = []
+        self._timeArray = []
 
     def next_collision(self):
         dt = self._ball.time_to_collision(self._container)
-        Simulation.t += dt
+        self._t += dt
         self._ball.move(dt)
         self._ball.collide(self._container)
+        self._delta_p += 2*self._ball.momentum()
+        self._delta_t += dt
+
+        if self._delta_t > timeInterval:
+            self._pressureArray.append((self._delta_p/self._delta_t)/(2*np.pi*(self._container._r**2))) 
+            self._timeArray.append(self._t)
+            self._delta_t = 0
+            self._delta_p = 0
 
     def run(self, num_frames, animate=False):
         if animate:
@@ -156,6 +182,7 @@ class Simulation():
             self.next_collision()
             if animate:
                 pl.pause(0.001)
+                print(self._totalKE)
         if animate:
             pl.show()
         

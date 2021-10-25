@@ -25,9 +25,9 @@ class Ball():
         self._v = np.array(v)[:].astype(np.float32)
         self._type = type
         if self._type == "ball":
-            self._patch = pl.Circle(self._p, self._r, fc='r', fill='True')
+            self._patch = pl.Circle(self._p, self._r, fc='r', fill=True)
         else:
-            self._patch = pl.Circle(self._p, self._r, fc='b', fill='False')
+            self._patch = pl.Circle(self._p, self._r, fc='b', fill=False)
 
     def pos(self):
         """Return current position of object.
@@ -52,7 +52,9 @@ class Ball():
             dt (float): Object's position is updated to the position dt seconds later.
         """
         self._p = np.add(self._p, dt*self._v)
-        self._patch = pl.Circle(self._p, self._r, fc='r', fill='True')
+        print(self._p)
+        #updates patch
+        self._patch.center = self._p
 
     def time_to_collision(self, other):
         """Return the time to the next collision of self with another object of class Ball.
@@ -106,9 +108,9 @@ class Ball():
 
         #calculating the modulus of the component of v1 and v2
         #parallelt to r after the collision
-        mod_v1_par = np.dot(v1, r)/np.linalg.norm(r)
-        mod_v2_par = np.dot(v2, r)/np.linalg.norm(r)
-        mod_v1_par_new = ((m1-m2)/(m1+m2))*mod_v1_par + ((2*m2)/(m1+m1))*mod_v2_par
+        mod_v1_par = np.dot(v1, rhat)
+        mod_v2_par = np.dot(v2, rhat)
+        mod_v1_par_new = ((m1-m2)/(m1+m2))*mod_v1_par + ((2*m2)/(m1+m2))*mod_v2_par
         mod_v2_par_new = ((2*m1)/(m1+m2))*mod_v1_par + ((m2-m1)/(m1+m2))*mod_v2_par
         
         #turning the modulus into a vector by multiplying by rhat
@@ -126,9 +128,12 @@ class Ball():
         self._v = np.add(vec_v1_par_new, vec_v1_perp)
         other._v = np.add(vec_v2_par_new, vec_v2_perp)
 
+    def get_patch(self):
+        return self._patch
 # %%
 container = Ball(m=1e38, r=10, p=[0,0], v=[0,0], type="container")
 ball = Ball(m=1, r=1, p=[-5,0], v=[1,0])
+ball2 = Ball(m=1, r=1, p=[0,0], v=[1/np.sqrt(2),1/np.sqrt(2)])
 class Simulation():
     t = 0
     def __init__(self, container, ball):
@@ -141,7 +146,24 @@ class Simulation():
         self._ball.move(dt)
         self._ball.collide(self._container)
 
+    def run(self, num_frames, animate=False):
+        if animate:
+            f = pl.figure()
+            ax = pl.axes(xlim=(-10, 10), ylim=(-10, 10))
+            ax.add_artist(self._container.get_patch())
+            ax.add_patch(self._ball.get_patch())
+        for frame in range(num_frames):
+            self.next_collision()
+            if animate:
+                pl.pause(0.001)
+        if animate:
+            pl.show()
+        
+    
+
 simulation1 = Simulation(container, ball)
+simulation2 = Simulation(container, ball2)
 
 simulation1.next_collision()
+
 # %%

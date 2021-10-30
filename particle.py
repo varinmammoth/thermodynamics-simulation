@@ -3,6 +3,7 @@
 #%%
 import numpy as np
 import pylab as pl
+import generate_points as points
 
 from numpy.core.numeric import Inf
 from numpy.lib.user_array import container
@@ -64,13 +65,13 @@ class Ball():
         Returns:
             float: Time for self to collide with other. Returns None if objects do not collide.
         """
-        r = np.subtract(self._p, other._p)
-        v = np.subtract(self._v, other._v)
+        r = np.subtract(self.pos(), other.pos())
+        v = np.subtract(self.vel(), other.vel())
 
         def get_t(R):
             #A list of length 2 with each of the solutions to the dt quadratic.
-            t_array = [(-np.dot(r,v) + np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))),\
-                 (-np.dot(r,v) - np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2)))]
+            t_array = [((-np.dot(r,v) + np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v),\
+                 ((-np.dot(r,v) - np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v)]
             
             #checks elements of t_array and only returns the positive && real case
             for i in t_array:
@@ -95,6 +96,9 @@ class Ball():
 
         Args:
             other (Ball): The other object self is colliding with.
+        
+        Returns:
+            (bool): Returns true if the collision is a ball-container collision
         """
         #the modulus of the component of v1 and v2 parallel to r,
         #the vector joining the center of two balls
@@ -127,6 +131,11 @@ class Ball():
         self._v = np.add(vec_v1_par_new, vec_v1_perp)
         other._v = np.add(vec_v2_par_new, vec_v2_perp)
 
+        if self._type == 'ball' and other._type == 'ball':
+            return False
+        else:
+            return True
+
     def get_patch(self):
         """Returns patch of ball for animation.
 
@@ -141,16 +150,61 @@ class Ball():
     def momentum(self):
         return self._m*(np.linalg.norm(self.vel()))
 # %%
-container = Ball(m=1e38, r=10, p=[0,0], v=[0,0], type="container")
-ball = Ball(m=1, r=1, p=[-5,0], v=[1,0])
-ball2 = Ball(m=1, r=1, p=[-6.708,-6.708], v=[1/np.sqrt(2),1/np.sqrt(2)])
+class BallsArray():
+    def __init__(self, container_r=10):
+        self._ballarray = []
+        self._container_r = container_r
+        self._container = Ball(m=1e38, r=container_r, p=[0,0], v=[0,0], type="container")
+        
+    def get_array(self):
+        return self._ballarray
+
+    def get_all_pairs(self):
+        """Returns all pairings of ball-ball and ball-container.
+
+        Returns:
+            list: List of length (n+1)c2 containing all pairings (ie. includes container).
+        """
+        #from stackoverflow
+        return [(self._ballarray[i],self._ballarray[j]) for i in range(len(self._ballarray)) for j in range(i+1, len(self._ballarray))]
+    
+    def reset(self):
+        self._ballarray = []
+
+    def move_balls(self, dt):
+        for ball in self._ballarray:
+            ball.move(dt)
+
+    def uniform(self, n, v, m, r):
+        """Creates a list with ball objects with uniform mass and velocity.
+            To return the list, use self.get_array()
+
+        Args:
+            n (int): number of balls
+            v (list): [x,y] initial velocities of balls
+            m (float): mass of balls
+            r (float): radius of ball
+
+        Returns:
+            list: list of length n containing ball objects of unifrom mass and velocity
+            randomly distributed
+        """
+        self._ballarray = []
+        
+        p_array = points.generate_points(n, r, self._container_r)
+
+        #Create the ballarray
+        for i in range (0,n):
+            self._ballarray.append(Ball(m, r, [p_array[i][0], p_array[i][1]], v, type="ball"))
+
+        self._ballarray.append(self._container)
+#%%
+ballarray = BallsArray()
+ballarray.uniform(20, [1,0], 1, 0.5)
 timeInterval = 50
 class Simulation():
-    pressureCalculation = False
-    def __init__(self, container, ball):
-        self._container = container
-        self._ball = ball
-        self._totalKE = self._ball.kinetic()
+    def __init__(self, ballarray):
+        self._ballarray = ballarray
         self._t = 0
         
         self._delta_p = 0 #change in momentume to calculate force
@@ -158,16 +212,47 @@ class Simulation():
         self._pressureArray = []
         self._timeArray = []
 
+    def updateKE(self):
+        KE = []
+        for ball in self._ballarray:
+            KE.append(ball.kinetic())
+        self._KE = KE
+
     def next_collision(self):
-        dt = self._ball.time_to_collision(self._container)
+        """Performs the next collision. Also updates self._timeArray and
+            self._pressureArray.
+        """
+        times_to_collision = []
+        for pair in self._ballarray.get_all_pairs():
+            times_to_collision.append(pair[0].time_to_collision(pair[1]))
+        
+        #changes None type to some very large number, essentially infinity
+        for i in range(0,len(times_to_collision)):
+            if times_to_collision[i] == None:
+                times_to_collision[i] = 1e10
+
+        pair_index = np.argmin(times_to_collision)
+        dt = np.min(times_to_collision)
         self._t += dt
-        self._ball.move(dt)
-        self._ball.collide(self._container)
-        self._delta_p += 2*self._ball.momentum()
+        self._ballarray.move_balls(dt)
+        isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
+        if isContainer:
+            #if ball collide with container, add 2*momentumBall to self._delta_p
+            #but first, need to select which of the two in the pair is the ball
+            if self._ballarray.get_all_pairs()[pair_index][0]._type == 'ball':
+                ball = self._ballarray.get_all_pairs()[pair_index][0]
+            else:
+                ball = self._ballarray.get_all_pairs()[pair_index][1]
+            self._delta_p += 2*ball.momentum()
         self._delta_t += dt
 
+        # Whenever self._delta_t is greater than some value
+        # timeInterval, self._delta_p and self._delta_t is used to calculate
+        # the average pressure on the container, the pressure gets appended
+        # to self._pressureArray, the time gets appended to self._timeArray,
+        # then self._delta_p and self._delta_t is reset to 0.
         if self._delta_t > timeInterval:
-            self._pressureArray.append((self._delta_p/self._delta_t)/(2*np.pi*(self._container._r**2))) 
+            self._pressureArray.append((self._delta_p/self._delta_t)/(2*np.pi*(self._ballarray.get_array()[-1]._r**2))) 
             self._timeArray.append(self._t)
             self._delta_t = 0
             self._delta_p = 0
@@ -175,22 +260,17 @@ class Simulation():
     def run(self, num_frames, animate=False):
         if animate:
             f = pl.figure()
-            ax = pl.axes(xlim=(-10, 10), ylim=(-10, 10))
-            ax.add_artist(self._container.get_patch())
-            ax.add_patch(self._ball.get_patch())
+            ax = pl.axes(xlim=(-self._ballarray.get_array()[-1]._r, self._ballarray.get_array()[-1]._r), ylim=(-self._ballarray.get_array()[-1]._r, self._ballarray.get_array()[-1]._r))
+            ax.add_artist(self._ballarray.get_array()[-1].get_patch())
+            for ball in self._ballarray.get_array()[0:-1]:
+                ax.add_patch(ball.get_patch())
         for frame in range(num_frames):
             self.next_collision()
             if animate:
                 pl.pause(0.001)
-                print(self._totalKE)
         if animate:
             pl.show()
         
-    
 
-simulation1 = Simulation(container, ball)
-simulation2 = Simulation(container, ball2)
-
-simulation1.next_collision()
 
 # %%

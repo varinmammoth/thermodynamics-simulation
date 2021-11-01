@@ -29,6 +29,7 @@ class Ball():
             self._patch = pl.Circle(self._p, self._r, fc='r', fill=True)
         else:
             self._patch = pl.Circle(self._p, self._r, fc='b', fill=False)
+        self._errorCorrectionMode = False
 
     def pos(self):
         """Return current position of object.
@@ -68,17 +69,6 @@ class Ball():
         r = np.subtract(self.pos(), other.pos())
         v = np.subtract(self.vel(), other.vel())
 
-        def get_t(R):
-            #A list of length 2 with each of the solutions to the dt quadratic.
-            t_array = [((-np.dot(r,v) + np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v),\
-                 ((-np.dot(r,v) - np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v)]
-            
-            #checks elements of t_array and only returns the positive && real case
-            for i in t_array:
-                if isinstance(i, complex) == False:
-                    if i >=0:
-                        return i
-
         #Check what self is colliding with.
         #If colliding with another ball we use the R = r1 + r2 case
         #else, if not colliding with ball then must be a container, so 
@@ -87,6 +77,39 @@ class Ball():
             R = self._r + other._r
         else:
             R = self._r - other._r
+
+        c = np.sqrt(np.dot(r,r) - np.dot(R,R)) #error (see labbook)
+        epsilon = 1e-15 #error correction factor
+        
+        def get_t(R):
+            #A list of length 2 with each of the solutions to the dt quadratic.
+            t_array = [((-np.dot(r,v) + np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v),\
+                 ((-np.dot(r,v) - np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v)]
+            
+            #checks elements of t_array and only returns the positive && real case
+            
+            if c < epsilon:
+                self._errorCorrectionMode = False
+                t_array_real = []
+                for i in t_array:
+                    if isinstance(i, complex) == False and (i > 0):
+                        t_array_real.append(i)
+
+                if len(t_array_real) != 0:
+                    return np.min(t_array_real)
+                else:
+                    return None
+            else:
+                self._errorCorrectionMode = True
+                t_array_real = []
+                for i in t_array:
+                    if isinstance(i, complex) == False and (i < 0):
+                        t_array_real.append(i)
+                
+                if len(t_array_real) != 0:
+                    return np.max(t_array_real)
+                else:
+                    return None
         
         #use the get_t function to return the positive && real time to next collision
         return get_t(R)
@@ -149,6 +172,9 @@ class Ball():
 
     def momentum(self):
         return self._m*(np.linalg.norm(self.vel()))
+
+    def errorCorrectionMode():
+        return self._errorCorrectionMode
 # %%
 class BallsArray():
     def __init__(self, container_r=10):
@@ -157,6 +183,11 @@ class BallsArray():
         self._container = Ball(m=1e38, r=container_r, p=[0,0], v=[0,0], type="container")
         
     def get_array(self):
+        """Return list with ball all ball objects. Last element is the container.
+
+        Returns:
+            list: List with all ball objects. Last element is the container.
+        """
         return self._ballarray
 
     def get_all_pairs(self):
@@ -198,9 +229,14 @@ class BallsArray():
             self._ballarray.append(Ball(m, r, [p_array[i][0], p_array[i][1]], v, type="ball"))
 
         self._ballarray.append(self._container)
+
+    def manual_add_ball(self, newBall):
+        self._ballarray.append(newBall)
+
+    def manual_add_container(self):
+        self._ballarray.append(self._container)
 #%%
-ballarray = BallsArray()
-ballarray.uniform(20, [1,0], 1, 0.5)
+
 timeInterval = 50
 class Simulation():
     def __init__(self, ballarray):
@@ -267,6 +303,7 @@ class Simulation():
         for frame in range(num_frames):
             self.next_collision()
             if animate:
+                self._ballarray.get_array()[0]
                 pl.pause(0.001)
         if animate:
             pl.show()

@@ -4,6 +4,7 @@
 import numpy as np
 import pylab as pl
 import generate_points as points
+import cmath
 
 from numpy.core.numeric import Inf
 from numpy.lib.user_array import container
@@ -57,6 +58,16 @@ class Ball():
         #updates patch
         self._patch.center = self._p
 
+    def overlap_error(self, other):
+        r = np.subtract(self.pos(), other.pos())
+        v = np.subtract(self.vel(), other.vel())
+        if (self._type == "ball" and other._type == "ball"):
+            R = self._r + other._r
+        else:
+            R = self._r - other._r
+        error = abs(np.dot(r,r) - R**2)
+        return error
+
     def time_to_collision(self, other):
         """Return the time to the next collision of self with another object of class Ball.
 
@@ -73,46 +84,60 @@ class Ball():
         #If colliding with another ball we use the R = r1 + r2 case
         #else, if not colliding with ball then must be a container, so 
         #use the R = r1 - r2 case
-        if other._type == "ball":
+        if (self._type == "ball" and other._type == "ball"):
             R = self._r + other._r
         else:
             R = self._r - other._r
-
-        c = np.sqrt(np.dot(r,r) - np.dot(R,R)) #error (see labbook)
-        epsilon = 1e-15 #error correction factor
         
         def get_t(R):
             #A list of length 2 with each of the solutions to the dt quadratic.
-            t_array = [((-np.dot(r,v) + np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v),\
-                 ((-np.dot(r,v) - np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v)]
-            
-            #checks elements of t_array and only returns the positive && real case
-            
-            if c < epsilon:
-                self._errorCorrectionMode = False
-                t_array_real = []
-                for i in t_array:
-                    if isinstance(i, complex) == False and (i > 0):
-                        t_array_real.append(i)
-
-                if len(t_array_real) != 0:
-                    return np.min(t_array_real)
-                else:
-                    return None
-            else:
-                self._errorCorrectionMode = True
-                t_array_real = []
-                for i in t_array:
-                    if isinstance(i, complex) == False and (i < 0):
-                        t_array_real.append(i)
-                
-                if len(t_array_real) != 0:
-                    return np.max(t_array_real)
-                else:
-                    return None
+            t_array = [((-np.dot(r,v) + cmath.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v),\
+                 ((-np.dot(r,v) - cmath.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v)]
+            return t_array
         
-        #use the get_t function to return the positive && real time to next collision
-        return get_t(R)
+        def get_pos_real(t_array):
+            t_array_real = []
+            for i in t_array:
+                if (i.imag == 0) and (i.real > 0):
+                    t_array_real.append(i.real)
+
+            if len(t_array_real) != 0:
+                return np.min(t_array_real)
+            else:
+                return None
+
+        def get_neg_real(t_array):
+            t_array_real = []
+            for i in t_array:
+                if (i.imag == 0) and (i.real < 0):
+                    t_array_real.append(i.real)
+
+            if len(t_array_real) != 0:
+                return np.max(t_array_real)
+            else:
+                return None
+
+        t_array = get_t(R)
+
+        overlap = np.dot(r,r) - R**2
+        epsilon = 1e-20
+
+        self._errorCorrectionMode = False
+        if self._type == 'ball' and other._type == 'ball':
+            if overlap >= epsilon:
+                time_to_collision = get_pos_real(t_array)
+            else:
+                time_to_collision = get_neg_real(t_array)
+                self._errorCorrectionMode = True
+        else:
+            if overlap <= epsilon:
+                time_to_collision = get_pos_real(t_array)
+            else:
+                time_to_collision = get_neg_real(t_array)
+                self._errorCorrectionMode = True
+        
+        return time_to_collision
+            
 
     def collide(self, other):
         """Updates the velocities of self and other after they collide.
@@ -173,7 +198,7 @@ class Ball():
     def momentum(self):
         return self._m*(np.linalg.norm(self.vel()))
 
-    def errorCorrectionMode():
+    def errorCorrectionMode(self):
         return self._errorCorrectionMode
 # %%
 class BallsArray():
@@ -303,8 +328,12 @@ class Simulation():
         for frame in range(num_frames):
             self.next_collision()
             if animate:
-                self._ballarray.get_array()[0]
-                pl.pause(0.001)
+                print('frame: ' + str(frame))
+                print(self._ballarray.get_array()[0].time_to_collision(self._ballarray.get_array()[1]))
+                print(self._ballarray.get_array()[0].pos())
+                print(self._ballarray.get_array()[1].pos())
+                print(self._ballarray.get_array()[0].overlap_error(self._ballarray.get_array()[1]))
+                pl.pause(1)
         if animate:
             pl.show()
         

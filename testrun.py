@@ -6,7 +6,7 @@ plt.plot(1,1) #used to initialise animation (IDE specific thing)
 plt.show()
 
 ballarray = p.BallsArray(container_r=20)
-ballarray.uniform(25, [1,0], 1, 0.5)
+ballarray.uniform(1, [1,0], 1, 0.5)
 simulation = p.Simulation(ballarray)
 
 frames = 2000 #number of iterations

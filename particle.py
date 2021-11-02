@@ -30,7 +30,6 @@ class Ball():
             self._patch = pl.Circle(self._p, self._r, fc='r', fill=True)
         else:
             self._patch = pl.Circle(self._p, self._r, fc='b', fill=False)
-        self._errorCorrectionMode = False
 
     def pos(self):
         """Return current position of object.
@@ -120,21 +119,18 @@ class Ball():
         t_array = get_t(R)
 
         overlap = np.dot(r,r) - R**2
-        epsilon = 1e-20
+        epsilon = 1e-10
 
-        self._errorCorrectionMode = False
         if self._type == 'ball' and other._type == 'ball':
             if overlap >= epsilon:
                 time_to_collision = get_pos_real(t_array)
             else:
                 time_to_collision = get_neg_real(t_array)
-                self._errorCorrectionMode = True
         else:
             if overlap <= epsilon:
                 time_to_collision = get_pos_real(t_array)
             else:
                 time_to_collision = get_neg_real(t_array)
-                self._errorCorrectionMode = True
         
         return time_to_collision
             
@@ -206,7 +202,7 @@ class BallsArray():
         self._ballarray = []
         self._container_r = container_r
         self._container = Ball(m=1e38, r=container_r, p=[0,0], v=[0,0], type="container")
-        
+
     def get_array(self):
         """Return list with ball all ball objects. Last element is the container.
 
@@ -267,7 +263,8 @@ class Simulation():
     def __init__(self, ballarray):
         self._ballarray = ballarray
         self._t = 0
-        
+        self._errorCorrectionMode = False
+
         self._delta_p = 0 #change in momentume to calculate force
         self._delta_t = 0   #change in time to calculate force
         self._pressureArray = []
@@ -283,6 +280,7 @@ class Simulation():
         """Performs the next collision. Also updates self._timeArray and
             self._pressureArray.
         """
+
         times_to_collision = []
         for pair in self._ballarray.get_all_pairs():
             times_to_collision.append(pair[0].time_to_collision(pair[1]))
@@ -294,18 +292,27 @@ class Simulation():
 
         pair_index = np.argmin(times_to_collision)
         dt = np.min(times_to_collision)
-        self._t += dt
-        self._ballarray.move_balls(dt)
-        isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
-        if isContainer:
-            #if ball collide with container, add 2*momentumBall to self._delta_p
-            #but first, need to select which of the two in the pair is the ball
-            if self._ballarray.get_all_pairs()[pair_index][0]._type == 'ball':
-                ball = self._ballarray.get_all_pairs()[pair_index][0]
-            else:
-                ball = self._ballarray.get_all_pairs()[pair_index][1]
-            self._delta_p += 2*ball.momentum()
-        self._delta_t += dt
+
+        # if dt < 0:
+        #     self._errorCorrectionMode = True
+
+        if self._errorCorrectionMode == False:
+            self._t += dt
+            self._ballarray.move_balls(dt)
+            isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
+            if isContainer:
+                #if ball collide with container, add 2*momentumBall to self._delta_p
+                #but first, need to select which of the two in the pair is the ball
+                if self._ballarray.get_all_pairs()[pair_index][0]._type == 'ball':
+                    ball = self._ballarray.get_all_pairs()[pair_index][0]
+                else:
+                    ball = self._ballarray.get_all_pairs()[pair_index][1]
+                self._delta_p += 2*ball.momentum()
+            self._delta_t += dt
+        else:
+            self._ballarray.get_all_pairs()[pair_index][0].move(dt)
+            self._ballarray.get_all_pairs()[pair_index][1].move(dt)
+            self._errorCorrectionMode = False
 
         # Whenever self._delta_t is greater than some value
         # timeInterval, self._delta_p and self._delta_t is used to calculate
@@ -333,7 +340,7 @@ class Simulation():
                 print(self._ballarray.get_array()[0].pos())
                 print(self._ballarray.get_array()[1].pos())
                 print(self._ballarray.get_array()[0].overlap_error(self._ballarray.get_array()[1]))
-                pl.pause(1)
+                pl.pause(0.01)
         if animate:
             pl.show()
         

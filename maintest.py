@@ -35,14 +35,23 @@ One ball collision with container diagnally
 
 """ 
 One ball collision with container in an arbirtary direction
+doesn't work
+"""
+# ballarray = p.BallsArray()
+# ballarray.manual_add_ball(p.Ball(1,1,[0.1,0.1],[-3.4,-7.2]))
+# ballarray.manual_add_container()
+# simulation = p.Simulation(ballarray)
+# simulation.run(10, animate=True)
+
+"""
+Ball to ball collision
 """
 ballarray = p.BallsArray()
-ballarray.manual_add_ball(p.Ball(1,1,[0.1,0.1],[-3.4,-7.2]))
+ballarray.manual_add_ball(p.Ball(1,1,[5,0],[-5,0]))
+ballarray.manual_add_ball(p.Ball(1,1,[-5,0],[5,0]))
 ballarray.manual_add_container()
 simulation = p.Simulation(ballarray)
 simulation.run(10, animate=True)
-
-
 
 # %%
 import numpy as np
@@ -119,5 +128,5 @@ else:
         time_to_collision = get_neg_real(t_array)
         self._errorCorrectionMode = True
 
-return time_to_collision
+
 # %%

@@ -47,11 +47,11 @@ doesn't work
 Ball to ball collision
 """
 ballarray = p.BallsArray()
-ballarray.manual_add_ball(p.Ball(1,1,[5,0],[-5,0]))
-ballarray.manual_add_ball(p.Ball(1,1,[-5,0],[5,0]))
+ballarray.manual_add_ball(p.Ball(1,1,[5.3,1.4],[-5,3]))
+ballarray.manual_add_ball(p.Ball(1,1,[-5,1],[5,1]))
 ballarray.manual_add_container()
 simulation = p.Simulation(ballarray)
-simulation.run(10, animate=True)
+simulation.run(25, animate=True)
 
 # %%
 import numpy as np

@@ -194,8 +194,6 @@ class Ball():
     def momentum(self):
         return self._m*(np.linalg.norm(self.vel()))
 
-    def errorCorrectionMode(self):
-        return self._errorCorrectionMode
 # %%
 class BallsArray():
     def __init__(self, container_r=10):
@@ -290,12 +288,24 @@ class Simulation():
             if times_to_collision[i] == None:
                 times_to_collision[i] = 1e10
 
-        pair_index = np.argmin(times_to_collision)
-        dt = np.min(times_to_collision)
+        neg_times = []
+        pos_times = []
+        for i in times_to_collision:
+            if i < 0:
+                neg_times.append(i)
+            else:
+                pos_times.append(i)
+        if len(neg_times) == 0:
+            pair_index = np.argmin(times_to_collision)
+            dt = np.min(times_to_collision)
+        else:
+            dt = np.min(neg_times)
+            pair_index = times_to_collision.index(dt)
+        
+        if dt < 0:
+            self._errorCorrectionMode = True
 
-        # if dt < 0:
-        #     self._errorCorrectionMode = True
-
+        print(dt)
         if self._errorCorrectionMode == False:
             self._t += dt
             self._ballarray.move_balls(dt)
@@ -336,11 +346,11 @@ class Simulation():
             self.next_collision()
             if animate:
                 print('frame: ' + str(frame))
-                print(self._ballarray.get_array()[0].time_to_collision(self._ballarray.get_array()[1]))
-                print(self._ballarray.get_array()[0].pos())
-                print(self._ballarray.get_array()[1].pos())
-                print(self._ballarray.get_array()[0].overlap_error(self._ballarray.get_array()[1]))
-                pl.pause(0.01)
+                # print(self._ballarray.get_array()[0].time_to_collision(self._ballarray.get_array()[1]))
+                # print(self._ballarray.get_array()[0].pos())
+                # print(self._ballarray.get_array()[1].pos())
+                # print(self._ballarray.get_array()[0].overlap_error(self._ballarray.get_array()[1]))
+                pl.pause(1)
         if animate:
             pl.show()
         

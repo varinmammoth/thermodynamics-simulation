@@ -52,6 +52,7 @@ pl.show()
 
 f = pl.figure()
 patch = pl.Circle([-10., -10.], 1, fc='r')
+patch 2 = pl.Circle([-3.8059688 -8.15565  ], 1)
 ax = pl.axes(xlim=(-10, 10), ylim=(-10, 10))
 ax.add_patch(patch)
 

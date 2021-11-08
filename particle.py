@@ -4,10 +4,11 @@
 import numpy as np
 import pylab as pl
 import generate_points as points
-import copy_ball_array as ball_copy
+
+debug = False
 
 class Ball():
-    def __init__(self, m, r, p, v, type="ball"):
+    def __init__(self, m, r, p, v, type="ball", color='r'):
         """Initialises Ball object with all the nessecary attributes.
 
         Args:
@@ -24,11 +25,11 @@ class Ball():
         self._v = np.array(v)[:].astype(np.float32)
         self._type = type
         if self._type == "ball":
-            self._patch = pl.Circle(self._p, self._r, fc='r', fill=False)
+            self._patch = pl.Circle(self._p, self._r, fc=color, fill=True)
         else:
             self._patch = pl.Circle(self._p, self._r, fc='b', fill=False)
 
-        self._v_past = [] #velocity in the previous iteration
+        self._v_past = self._v #velocity in the previous iteration
 
     def pos(self):
         """Return current position of object.
@@ -59,27 +60,6 @@ class Ball():
         #updates patch
         self._patch.center = self._p
 
-    def move_correct(self, dt):
-        """Used to make corrections to overlaps.
-
-        Args:
-            dt (float): Time increment to move by. Since it is a correction, dt is always negative.
-            v (list): (x,y) components of ball's velocity in the previous iteration.
-        """
-        self._p = np.add(self._p, dt*self.vel_past())
-        #updates patch
-        self._patch.center = self._p
-
-    def overlap_error(self, other):
-        r = np.subtract(self.pos(), other.pos())
-        v = np.subtract(self.vel(), other.vel())
-        if (self._type == "ball" and other._type == "ball"):
-            R = self._r + other._r
-        else:
-            R = self._r - other._r
-        error = abs(np.dot(r,r) - R**2)
-        return error
-
     def correct_error(self, other, epsilon=1e-3):
         if (self._type == "ball" and other._type == "ball"):
             R = self._r + other._r
@@ -99,8 +79,9 @@ class Ball():
             if error > 0:
                 self._p = np.subtract(self._p, epsilon*self.vel_past())
         
-        print('Error: ')
-        print(error)
+        if debug:
+            print('Error: ')
+            print(error)
 
     def time_to_collision(self, other):
         """Return the time to the next collision of self with another object of class Ball.
@@ -145,15 +126,16 @@ class Ball():
 
         time_to_collision = get_pos_real(t_array)
 
-        print(' ')
-        print('t_array and dt: ')
-        print(t_array)
-        print(time_to_collision)
-        print('pair position:')
-        print(self.pos(), other.pos())
-        print('pair velocity:')
-        print(self.vel(), other.vel())
-        print(' ')
+        if debug:
+            print(' ')
+            print('t_array and dt: ')
+            print(t_array)
+            print(time_to_collision)
+            print('pair position:')
+            print(self.pos(), other.pos())
+            print('pair velocity:')
+            print(self.vel(), other.vel())
+            print(' ')
 
         return time_to_collision
             
@@ -276,14 +258,56 @@ class BallsArray():
 
         self._ballarray.append(self._container)
 
+    def random_vel(self, n, v_avg, sd, m, r):
+        """Creates a list with ball objects with uniform mass and random velocities
+            with average velocity v_avg and standard deviation sd.
+            To return the list, use self.get_array()
+
+        Args:
+            n (int): number of balls
+            v (list): [x,y] average initial velocities of balls
+            m (float): mass of balls
+            r (float): radius of ball
+
+        Returns:
+            list: list of length n containing ball objects of unifrom mass and velocity
+            randomly distributed
+        """
+        self._ballarray = []
+        
+        p_array = points.generate_points(n, r, self._container_r)
+
+        v = []
+        for i in range(0,n):
+            v.append([np.random.normal(v_avg, sd), np.random.normal(v_avg, sd)])
+
+        #Create the ballarray
+        for i in range (0,n):
+            self._ballarray.append(Ball(m, r, [p_array[i][0], p_array[i][1]], v[i], type="ball"))
+
+        self._ballarray.append(self._container)
+
     def manual_add_ball(self, newBall):
         self._ballarray.append(newBall)
 
     def manual_add_container(self):
         self._ballarray.append(self._container)
+
+    def dist_between_balls(self):
+        distance_array = []
+        for pair in self.get_all_pairs()[:-1]:
+            distance_array.append(np.linalg.norm(pair[1].pos() - pair[0].pos()))
+        return distance_array
+
+    def dist_to_center(self):
+        distance_array = []
+        center = self.get_array()[-1].pos()
+        for ball in self.get_array()[:-1]:
+            distance_array.append(np.linalg.norm(ball.pos() - center))
+        return distance_array
 #%%
 
-timeInterval = 50
+timeInterval = 0.5
 class Simulation():
     def __init__(self, ballarray):
         self._ballarray = ballarray
@@ -292,7 +316,11 @@ class Simulation():
         self._delta_p = 0 #change in momentume to calculate force
         self._delta_t = 0   #change in time to calculate force
         self._pressureArray = []
-        self._timeArray = []
+        self._pressureTimeArray = []
+
+        self._distanceTimeArray = []
+        self._distanceToCenter = [] #distances of balls to center
+        self._distanceToBalls = []  #distances of balls to balls
 
     def updateKE(self):
         KE = []
@@ -301,7 +329,7 @@ class Simulation():
         self._KE = KE
 
     def next_collision(self):
-        """Performs the next collision. Also updates self._timeArray and
+        """Performs the next collision. Also updates self._pressureTimeArray and
             self._pressureArray.
         """
         #check for any overlaps and corrects them
@@ -320,14 +348,20 @@ class Simulation():
         dt = np.min(times_to_collision)
         pair_indices = np.where(times_to_collision == dt)[0]
         
-        print('times to collision array:')
-        print(times_to_collision)
+        if debug:
+            print('times to collision array:')
+            print(times_to_collision)
 
-        print('dt: ')
-        print(dt)
+            print('dt: ')
+            print(dt)
+
+        self._distanceTimeArray.append(self._t)
+        self._distanceToBalls.append(self._ballarray.dist_between_balls())
+        self._distanceToCenter.append(self._ballarray.dist_to_center())
 
         self._t += dt
         self._ballarray.move_balls(dt)
+        
         for pair_index in pair_indices:
             isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
             if isContainer:
@@ -344,11 +378,11 @@ class Simulation():
         # Whenever self._delta_t is greater than some value
         # timeInterval, self._delta_p and self._delta_t is used to calculate
         # the average pressure on the container, the pressure gets appended
-        # to self._pressureArray, the time gets appended to self._timeArray,
+        # to self._pressureArray, the time gets appended to self._pressureTimeArray,
         # then self._delta_p and self._delta_t is reset to 0.
         if self._delta_t > timeInterval:
             self._pressureArray.append((self._delta_p/self._delta_t)/(2*np.pi*(self._ballarray.get_array()[-1]._r**2))) 
-            self._timeArray.append(self._t)
+            self._pressureTimeArray.append(self._t)
             self._delta_t = 0
             self._delta_p = 0
 
@@ -360,24 +394,25 @@ class Simulation():
             for ball in self._ballarray.get_array()[0:-1]:
                 ax.add_patch(ball.get_patch())
         for frame in range(num_frames):
-            print(' ')
-            print('frame: ' + str(frame))
-            # print('position: ')
-            # print(self._ballarray.get_array()[0].pos())
-            # # print(self._ballarray.get_array()[1].pos())
-            # print('velocity: ')
-            # print(self._ballarray.get_array()[0].vel())
-            # print(self._ballarray.get_array()[1].vel())
+            if debug:
+                print(' ')
+                print('frame: ' + str(frame))
             self.next_collision()
             if animate:
-                # print(self._ballarray.get_array()[0].time_to_collision(self._ballarray.get_array()[1]))
-                # print(self._ballarray.get_array()[0].pos())
-                # print(self._ballarray.get_array()[1].pos())
-                # print(self._ballarray.get_array()[0].overlap_error(self._ballarray.get_array()[1]))
                 pl.pause(0.01)
         if animate:
             pl.show()
         
+    def get_pressure(self):
+        """Returns the time array and pressure array.
 
+        Returns:
+            list: Time.
+            list: Pressure at corresponding time.
+        """
+        return self._timeArray, self._pressureArray
+
+    def get_distances(self):
+        return self._distanceTimeArray, self._distanceToBalls, self._distanceToCenter
 
 # %%

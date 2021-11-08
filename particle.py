@@ -80,6 +80,28 @@ class Ball():
         error = abs(np.dot(r,r) - R**2)
         return error
 
+    def correct_error(self, other, epsilon=1e-3):
+        if (self._type == "ball" and other._type == "ball"):
+            R = self._r + other._r
+        else:
+            R = self._r - other._r
+
+        r = np.subtract(self.pos(), other.pos())
+        
+        error = np.dot(r,r) - R**2
+
+        if self._type == 'ball' and other._type == 'ball':
+            if error < 0:
+                self._p = np.subtract(self._p, epsilon*self.vel_past())
+                #updates patch
+                self._patch.center = self._p
+        else:
+            if error > 0:
+                self._p = np.subtract(self._p, epsilon*self.vel_past())
+        
+        print('Error: ')
+        print(error)
+
     def time_to_collision(self, other):
         """Return the time to the next collision of self with another object of class Ball.
 
@@ -99,20 +121,7 @@ class Ball():
             R = self._r - other._r
 
         r = np.subtract(self.pos(), other.pos())
-        
         v = np.subtract(self.vel(), other.vel())
-        
-        error = np.dot(r,r) - R**2
-        if self._type == 'ball' and other._type == 'ball':
-            if error < 0:
-                v = np.subtract(self.vel_past(), other.vel_past())
-            else:
-                v = np.subtract(self.vel(), other.vel())
-        else:
-            if error > 0:
-                v = np.subtract(self.vel_past(), other.vel_past())
-            else:
-                v = np.subtract(self.vel(), other.vel())
         
         def get_t(R):
             #A list of length 2 with each of the solutions to the dt quadratic.
@@ -132,37 +141,22 @@ class Ball():
             else:
                 return None
 
-        def get_neg_real(t_array):
-            #returns the largest negative real solution
-            t_array_real = []
-            for i in t_array:
-                if (np.isnan(i) == False) and (i < 0):
-                    t_array_real.append(i.real)
-
-            if len(t_array_real) != 0:
-                return np.max(t_array_real)
-            else:
-                return None
-
         t_array = get_t(R)
 
-        if self._type == 'ball' and other._type == 'ball':
-            if error < 0:
-                time_to_collision = get_neg_real(t_array)
-            else:
-                time_to_collision = get_pos_real(t_array)
-        else:
-            if error > 0:
-                time_to_collision = get_neg_real(t_array)
-            else:
-                time_to_collision = get_pos_real(t_array)
-        print('error:')
-        print(error)
-        print('t_array:')
+        time_to_collision = get_pos_real(t_array)
+
+        print(' ')
+        print('t_array and dt: ')
         print(t_array)
+        print(time_to_collision)
+        print('pair position:')
+        print(self.pos(), other.pos())
+        print('pair velocity:')
+        print(self.vel(), other.vel())
+        print(' ')
+
         return time_to_collision
             
-
     def collide(self, other):
         """Updates the velocities of self and other after they collide.
 
@@ -294,7 +288,6 @@ class Simulation():
     def __init__(self, ballarray):
         self._ballarray = ballarray
         self._t = 0
-        self._errorCorrectionMode = False
 
         self._delta_p = 0 #change in momentume to calculate force
         self._delta_t = 0   #change in time to calculate force
@@ -311,7 +304,9 @@ class Simulation():
         """Performs the next collision. Also updates self._timeArray and
             self._pressureArray.
         """
-        self._errorCorrectionMode = False
+        #check for any overlaps and corrects them
+        for pair in self._ballarray.get_all_pairs():
+            pair[0].correct_error(pair[1])
 
         times_to_collision = []
         for pair in self._ballarray.get_all_pairs():
@@ -321,43 +316,19 @@ class Simulation():
         for i in range(0,len(times_to_collision)):
             if (times_to_collision[i] == None) or (np.isnan(i)):
                 times_to_collision[i] = 1e15
-
-        #seperate the times to collision in times_to_collision array into 
-        #positive and negative lists:
-        neg_times = []
-        pos_times = []
-        for i in times_to_collision:
-            if i < 0:
-                neg_times.append(i)
-            else:
-                pos_times.append(i)
+            
+        dt = np.min(times_to_collision)
+        pair_indices = np.where(times_to_collision == dt)[0]
         
-        if len(neg_times) == 0:
-            #len(neg_times) not equal to zero implies that there is at least
-            #one pair of ball-ball or ball-container that are overlapping.
-            #This is due to the way the Ball.time_to_collision() method works,
-            #refer above.
-            #len(neg_times) being zero implies there is no overlap, and we simply
-            #take dt as the smallest value in times_to_collision.
-            pair_index = np.argmin(times_to_collision)
-            dt = np.min(times_to_collision)
-        else:
-            #If there is at least one negative time, we take the least negative time, ie the largest value.
-            #The program is also put into errorCorrection mode, ie. pressure, simulation time, and other
-            #values are not updated, only a single pair is moved.
-            dt = np.max(neg_times)
-            pair_index = times_to_collision.index(dt)
-            self._errorCorrectionMode = True
-
         print('times to collision array:')
         print(times_to_collision)
 
         print('dt: ')
         print(dt)
 
-        if self._errorCorrectionMode == False:
-            self._t += dt
-            self._ballarray.move_balls(dt)
+        self._t += dt
+        self._ballarray.move_balls(dt)
+        for pair_index in pair_indices:
             isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
             if isContainer:
                 #if ball collide with container, add 2*momentumBall to self._delta_p
@@ -367,12 +338,8 @@ class Simulation():
                 else:
                     ball = self._ballarray.get_all_pairs()[pair_index][1]
                 self._delta_p += 2*ball.momentum()
+        if isContainer:
             self._delta_t += dt
-        else:
-            #calls the Ball.move_correct(dt, v_prev) on overlapped balls/container.
-            #v_prev obtained from the state in the previous iteration.
-            self._ballarray.get_all_pairs()[pair_index][0].move_correct(dt)
-            self._ballarray.get_all_pairs()[pair_index][1].move_correct(dt)
 
         # Whenever self._delta_t is greater than some value
         # timeInterval, self._delta_p and self._delta_t is used to calculate
@@ -395,17 +362,19 @@ class Simulation():
         for frame in range(num_frames):
             print(' ')
             print('frame: ' + str(frame))
-            print('position: ')
-            print(self._ballarray.get_array()[0].pos())
-            print('velocity: ')
-            print(self._ballarray.get_array()[0].vel())
+            # print('position: ')
+            # print(self._ballarray.get_array()[0].pos())
+            # # print(self._ballarray.get_array()[1].pos())
+            # print('velocity: ')
+            # print(self._ballarray.get_array()[0].vel())
+            # print(self._ballarray.get_array()[1].vel())
             self.next_collision()
             if animate:
                 # print(self._ballarray.get_array()[0].time_to_collision(self._ballarray.get_array()[1]))
                 # print(self._ballarray.get_array()[0].pos())
                 # print(self._ballarray.get_array()[1].pos())
                 # print(self._ballarray.get_array()[0].overlap_error(self._ballarray.get_array()[1]))
-                pl.pause(1)
+                pl.pause(0.01)
         if animate:
             pl.show()
         

@@ -34,14 +34,13 @@ One ball collision with container diagnally
 # simulation.run(10, animate=True)
 
 """ 
-One ball collision with container in an arbirtary direction
-doesn't work
+One ball collision with container in an arbirtary initial position and direction
 """
-ballarray = p.BallsArray()
-ballarray.manual_add_ball(p.Ball(1,1,[0,0],[-3.5,-7.5]))
-ballarray.manual_add_container()
-simulation = p.Simulation(ballarray)
-simulation.run(10, animate=True)
+# ballarray = p.BallsArray()
+# ballarray.manual_add_ball(p.Ball(1,1,[6,-5],[-3,4]))
+# ballarray.manual_add_container()
+# simulation = p.Simulation(ballarray)
+# simulation.run(10, animate=True)
 
 """
 Ball to ball collision in on x-axis
@@ -51,17 +50,19 @@ Ball to ball collision in on x-axis
 # ballarray.manual_add_ball(p.Ball(1,1,[3,0],[-1,0]))
 # ballarray.manual_add_container()
 # simulation = p.Simulation(ballarray)
+# for pair in ballarray.get_all_pairs():
+#     print(pair[0].pos(), pair[1].pos())
 # simulation.run(10, animate=True)
 
 """
 Ball to ball collision in on y-axis
 """
-# ballarray = p.BallsArray()
-# ballarray.manual_add_ball(p.Ball(1,1,[0,3],[0,-1]))
-# ballarray.manual_add_ball(p.Ball(1,1,[0,-3],[0,1]))
-# ballarray.manual_add_container()
-# simulation = p.Simulation(ballarray)
-# simulation.run(10, animate=True)
+ballarray = p.BallsArray()
+ballarray.manual_add_ball(p.Ball(1,1,[0,3],[0,-1]))
+ballarray.manual_add_ball(p.Ball(1,1,[0,-3],[0,1]))
+ballarray.manual_add_container()
+simulation = p.Simulation(ballarray)
+simulation.run(10, animate=True)
 # %%
 """ 
 note to fix tmr:

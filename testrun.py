@@ -9,7 +9,7 @@ ballarray = p.BallsArray(container_r=20)
 ballarray.uniform(20, [1,0], 1, 0.5)
 simulation = p.Simulation(ballarray)
 
-frames = 20 #number of iterations
+frames = 200 #number of iterations
 
 simulation.run(frames, animate=True)
 # plt.plot(simulation._timeArray,simulation._pressureArray)

@@ -415,4 +415,5 @@ class Simulation():
     def get_distances(self):
         return self._distanceTimeArray, self._distanceToBalls, self._distanceToCenter
 
+print('hello world.')
 # %%

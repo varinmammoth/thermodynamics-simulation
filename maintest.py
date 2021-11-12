@@ -95,11 +95,15 @@ Try an arbritrary number of balls with uniform mass and initial velocity.
 # simulation.run(2000, animate=False)
 
 """
-Testing the simulation,.get_pressure() function.
+Testing the simulation.get_pressure() function.
 Experiment with various values of timeInterval in particle.py until get
 sensible pressure plot.
 
 """
+# ballarray = p.BallsArray(container_r=20)
+# ballarray.uniform(15, [25,0], 1, 1)
+# simulation = p.Simulation(ballarray)
+# simulation.run(200, animate=True)
 # t, P = simulation.get_pressure()
 # plt.plot(t, P, 'x')
 # plt.xlabel('Time (s)')
@@ -116,24 +120,29 @@ sensible pressure plot.
 Testing the uniformly positioned but random velocity with fixed mean and s.d.
 """
 ballarray = p.BallsArray(container_r=20)
-ballarray.random_vel(10, 0, 1, 1, 1)
+ballarray.random_vel(100, 0, 1, 1, 1)
 simulation = p.Simulation(ballarray)
-simulation.run(200, animate=True)
+simulation.run(500, animate=False)
 timeDistance, ballsDistance, centerDistance = simulation.get_distances()
 
 for i in range(0,len(timeDistance)):
-    ballsHistCenter, ballsHist = ps.get_histogram(ballsDistance[i], bins=10)
-    centerHistCenter, centerHist = ps.get_histogram(centerDistance[i], bins=10)
-    plt.title(timeDistance[i])
+    ballsDistanceHist = ps.get_histogram(ballsDistance[i], bins=20)
+    centerDistanceHist = ps.get_histogram(centerDistance[i], bins=20)
     plt.subplot(1,2,1)
-    plt.bar(ballsHistCenter, ballsHist)
+    plt.bar(ballsDistanceHist[0], ballsDistanceHist[1])
+    plt.xlim((0,40))
+    plt.ylim((0,2000))
     plt.xlabel('Distance between balls')
+    plt.ylabel('Count')
     plt.subplot(1,2,2)
-    plt.bar(centerHistCenter, centerHist)
-    plt.ylabel('Distance to center')
-    plt.show()
-    plt.pause(0.1)
+    plt.bar(centerDistanceHist[0], centerDistanceHist[1])
+    plt.xlim((0,20))
+    plt.ylim((0,50))
+    plt.xlabel('Distance to center')
+    plt.pause(0.00000001)
     plt.clf()
+
+plt.show()
 # %%
 """ 
 note to fix tmr:

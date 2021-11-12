@@ -8,11 +8,7 @@ def get_histogram(x, bins = 10):
         x (list): List of data
 
     Returns:
-        bin center
-        histogram value
-        histogram value uncertainty
-        normalised histogram value
-        normalise histogram value uncertainty
+        (tuple): bin center, histogram value, histogram value uncertainty, normalised histogram value, normalise histogram value uncertainty
     """
     hist, bins = np.histogram(x, bins=bins)
     center = (bins[:-1] + bins[1:]) / 2

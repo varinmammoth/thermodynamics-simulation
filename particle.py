@@ -59,6 +59,9 @@ class Ball():
         self._p = np.add(self._p, dt*self._v)
         #updates patch
         self._patch.center = self._p
+    
+    def move_correct(self, dt):
+        self._p = np.add(self._p, dt*self._v_past)
 
     def correct_error(self, other, epsilon=1e-3):
         if (self._type == "ball" and other._type == "ball"):
@@ -124,7 +127,59 @@ class Ball():
 
         t_array = get_t(R)
 
-        time_to_collision = get_pos_real(t_array)
+        error = np.dot(r,r) - R**2
+        if self._type == 'ball' and other._type == 'ball':
+            if error < 0:
+                v = np.subtract(self.vel_past(), other.vel_past())
+            else:
+                v = np.subtract(self.vel(), other.vel())
+        else:
+            if error > 0:
+                v = np.subtract(self.vel_past(), other.vel_past())
+            else:
+                v = np.subtract(self.vel(), other.vel())
+
+        def get_t(R):
+            #A list of length 2 with each of the solutions to the dt quadratic.
+            t_array = [((-np.dot(r,v) + np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v),\
+                 ((-np.dot(r,v) - np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v)]
+            return t_array
+        
+        def get_pos_real(t_array):
+            #returns the smallest positive real solution
+            t_array_real = []
+            for i in t_array:
+                if (np.isnan(i) == False) and (i > 0):
+                    t_array_real.append(i.real)
+            if len(t_array_real) != 0:
+                return np.min(t_array_real)
+            else:
+                return None
+
+        def get_neg_real(t_array):
+            #returns the largest negative real solution
+            t_array_real = []
+            for i in t_array:
+                if (np.isnan(i) == False) and (i < 0):
+                    t_array_real.append(i.real)
+
+            if len(t_array_real) != 0:
+                return np.max(t_array_real)
+            else:
+                return None
+
+        t_array = get_t(R)
+
+        if self._type == 'ball' and other._type == 'ball':
+            if error < 0:
+                time_to_collision = get_neg_real(t_array)
+            else:
+                time_to_collision = get_pos_real(t_array)
+        else:
+            if error > 0:
+                time_to_collision = get_neg_real(t_array)
+            else:
+                time_to_collision = get_pos_real(t_array)
 
         if debug:
             print(' ')
@@ -322,6 +377,8 @@ class Simulation():
         self._distanceToCenter = [] #distances of balls to center
         self._distanceToBalls = []  #distances of balls to balls
 
+        self._errorCorrectionMode = False
+
     def updateKE(self):
         KE = []
         for ball in self._ballarray:
@@ -344,9 +401,22 @@ class Simulation():
         for i in range(0,len(times_to_collision)):
             if (times_to_collision[i] == None) or (np.isnan(i)):
                 times_to_collision[i] = 1e15
+
+        neg_times = []
+        pos_times = []
+        for i in times_to_collision:
+            if i < 0:
+                neg_times.append(i)
+            else:
+                pos_times.append(i)
             
-        dt = np.min(times_to_collision)
-        pair_indices = np.where(times_to_collision == dt)[0]
+        if len(neg_times) == 0:
+            dt = np.min(times_to_collision)
+            pair_indices = np.where(times_to_collision == dt)[0]
+        else:
+            dt = np.max(neg_times)
+            pair_indices = np.where(times_to_collision == dt)[0]
+            self._errorCorrectionMode = True
         
         if debug:
             print('times to collision array:')
@@ -355,25 +425,31 @@ class Simulation():
             print('dt: ')
             print(dt)
 
-        self._distanceTimeArray.append(self._t)
-        self._distanceToBalls.append(self._ballarray.dist_between_balls())
-        self._distanceToCenter.append(self._ballarray.dist_to_center())
+        if self._errorCorrectionMode == False:
+            self._t += dt
+            self._ballarray.move_balls(dt)
 
-        self._t += dt
-        self._ballarray.move_balls(dt)
-        
-        for pair_index in pair_indices:
-            isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
+            self._distanceTimeArray.append(self._t)
+            self._distanceToBalls.append(self._ballarray.dist_between_balls())
+            self._distanceToCenter.append(self._ballarray.dist_to_center())
+            
+            for pair_index in pair_indices:
+                isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
+                if isContainer:
+                    #if ball collide with container, add 2*momentumBall to self._delta_p
+                    #but first, need to select which of the two in the pair is the ball
+                    if self._ballarray.get_all_pairs()[pair_index][0]._type == 'ball':
+                        ball = self._ballarray.get_all_pairs()[pair_index][0]
+                    else:
+                        ball = self._ballarray.get_all_pairs()[pair_index][1]
+                    self._delta_p += 2*ball.momentum()
             if isContainer:
-                #if ball collide with container, add 2*momentumBall to self._delta_p
-                #but first, need to select which of the two in the pair is the ball
-                if self._ballarray.get_all_pairs()[pair_index][0]._type == 'ball':
-                    ball = self._ballarray.get_all_pairs()[pair_index][0]
-                else:
-                    ball = self._ballarray.get_all_pairs()[pair_index][1]
-                self._delta_p += 2*ball.momentum()
-        if isContainer:
-            self._delta_t += dt
+                self._delta_t += dt
+        else:
+            for pair_index in pair_indices:
+                self._ballarray.get_all_pairs()[pair_index][0].move_correct(dt)
+                self._ballarray.get_all_pairs()[pair_index][1].move_correct(dt)
+            self._errorCorrectionMode = False
 
         # Whenever self._delta_t is greater than some value
         # timeInterval, self._delta_p and self._delta_t is used to calculate
@@ -399,6 +475,7 @@ class Simulation():
                 print('frame: ' + str(frame))
             self.next_collision()
             if animate:
+                ax.set_title(frame)
                 pl.pause(0.01)
         if animate:
             pl.show()
@@ -410,10 +487,19 @@ class Simulation():
             list: Time.
             list: Pressure at corresponding time.
         """
-        return self._timeArray, self._pressureArray
+        return self._pressureTimeArray, self._pressureArray
 
     def get_distances(self):
+        """Returns time array, distance between balls array, and distances to center array.
+        For example, distanceToBalls[i] is a list of distances between all balls at time 
+        distanceTimeArray[i].
+
+        Returns:
+            list: Time
+            list: Distance between all balls at corresponding time.
+            list: Distance between balls and center at corresponding time.
+        """
         return self._distanceTimeArray, self._distanceToBalls, self._distanceToCenter
 
-print('hello world.')
+
 # %%

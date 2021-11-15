@@ -127,41 +127,55 @@ ballarray.random_vel(num_balls, 0, 1, 1, 1)
 simulation = p.Simulation(ballarray)
 simulation.run(200, animate=False)
 timeDistance, ballsDistance, centerDistance = simulation.get_distances()
-timeVeloctiy, vx, vy, v = simulation.get_velocities()
+timeVelocity, vx, vy, v = simulation.get_velocities()
 
 #Plots the time variation of distance between balls, and distance to center of container
-for i in range(0,len(timeDistance)):
-    ballsDistanceHist = ps.get_histogram(ballsDistance[i], bins=20)
-    centerDistanceHist = ps.get_histogram(centerDistance[i], bins=20)
-    plt.subplot(1,2,1)
-    plt.bar(ballsDistanceHist[0], ballsDistanceHist[1])
-    plt.xlim((0,40))
-    plt.ylim((0,comb((num_balls+1),2)/2))
-    plt.xlabel('Distance between balls')
-    plt.ylabel('Count')
-    plt.subplot(1,2,2)
-    plt.bar(centerDistanceHist[0], centerDistanceHist[1])
-    plt.xlim((0,20))
-    plt.ylim((0,num_balls/2))
-    plt.xlabel('Distance to center')
-    plt.pause(0.00000001)
-    plt.clf()
-plt.show()
+
+# for i in range(0,len(timeDistance)):
+#     ballsDistanceHist = ps.get_histogram(ballsDistance[i], bins=20)
+#     centerDistanceHist = ps.get_histogram(centerDistance[i], bins=20)
+#     plt.subplot(1,2,1)
+#     plt.bar(ballsDistanceHist[0], ballsDistanceHist[1])
+#     plt.xlim((0,40))
+#     plt.ylim((0,comb((num_balls+1),2)/2))
+#     plt.xlabel('Distance between balls')
+#     plt.ylabel('Count')
+#     plt.subplot(1,2,2)
+#     plt.bar(centerDistanceHist[0], centerDistanceHist[1])
+#     plt.xlim((0,20))
+#     plt.ylim((0,num_balls/2))
+#     plt.xlabel('Distance to center')
+#     plt.pause(0.00000001)
+#     plt.clf()
+# plt.show()
 
 #Plots time variation of vx, vy and v
-for i in range(0, len(timeVeloctiy)):
+
+for i in range(0, len(timeVelocity)):
     vxHist = ps.get_histogram(vx[i], bins=20)
     vyHist = ps.get_histogram(vy[i], bins=20)
     vHist = ps.get_histogram(v[i], bins=20)
+
     plt.subplot(1,3,1)
     plt.bar(vxHist[0], vxHist[1])
     plt.xlabel('vx')
+    plt.xlim((-3,3))
+    plt.ylim((0,num_balls/2))
+    
     plt.subplot(1,3,2)
     plt.bar(vyHist[0], vyHist[1])
     plt.xlabel('vy')
+    plt.xlim((-3,3))
+    plt.ylim((0,num_balls/2))
+    
     plt.subplot(1,3,3)
     plt.bar(vHist[0], vHist[1])
     plt.xlabel('v')
+    plt.xlim((0,3))
+    plt.ylim((0,num_balls/2))
+    plt.pause(0.001)
+    plt.clf()
+plt.show()
 # %%
 """ 
 note to fix tmr:

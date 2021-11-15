@@ -81,10 +81,6 @@ class Ball():
         else:
             if error > 0:
                 self._p = np.subtract(self._p, epsilon*self.vel_past())
-        
-        if debug:
-            print('Error: ')
-            print(error)
 
     def time_to_collision(self, other):
         """Return the time to the next collision of self with another object of class Ball.
@@ -180,17 +176,6 @@ class Ball():
                 time_to_collision = get_neg_real(t_array)
             else:
                 time_to_collision = get_pos_real(t_array)
-
-        if debug:
-            print(' ')
-            print('t_array and dt: ')
-            print(t_array)
-            print(time_to_collision)
-            print('pair position:')
-            print(self.pos(), other.pos())
-            print('pair velocity:')
-            print(self.vel(), other.vel())
-            print(' ')
 
         return time_to_collision
             
@@ -363,9 +348,13 @@ class BallsArray():
 
     def vel_all_balls(self):
         vel_array = []
+        velx_array = []
+        vely_array = []
         for ball in self.get_array()[:-1]:
-            vel_array.append(ball.vel())
-        return vel_array
+            vel_array.append(np.linalg.norm(ball.vel()))
+            velx_array.append(ball.vel()[0])
+            vely_array.append(ball.vel()[1])
+        return (velx_array, vely_array, vel_array)
 #%%
 
 timeInterval = 0.5
@@ -382,7 +371,9 @@ class Simulation():
         self._distanceTimeArray = []
         self._distanceToCenter = [] #distances of balls to center at each time
         self._distanceToBalls = []  #distances of balls to balls at each time
-        self._velocityArray = [] #velocities of balls at each time
+        self._velArray = [] #velocities magnitude of balls at each time
+        self._velxArray = [] 
+        self._velyArray = []
 
         self._errorCorrectionMode = False
 
@@ -425,13 +416,6 @@ class Simulation():
             pair_indices = np.where(times_to_collision == dt)[0]
             self._errorCorrectionMode = True
         
-        if debug:
-            print('times to collision array:')
-            print(times_to_collision)
-
-            print('dt: ')
-            print(dt)
-
         if self._errorCorrectionMode == False:
             self._t += dt
             self._ballarray.move_balls(dt)
@@ -439,7 +423,9 @@ class Simulation():
             self._distanceTimeArray.append(self._t)
             self._distanceToBalls.append(self._ballarray.dist_between_balls())
             self._distanceToCenter.append(self._ballarray.dist_to_center())
-            self._velocityArray.append(self._ballarray.vel_all_balls())
+            self._velArray.append(self._ballarray.vel_all_balls()[0])
+            self._velxArray.append(self._ballarray.vel_all_balls()[1])
+            self._velyArray.append(self._ballarray.vel_all_balls()[2])
             
             for pair_index in pair_indices:
                 isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
@@ -520,14 +506,7 @@ class Simulation():
             list: y component of velocity at corresponding time
             list: velocity magnitude at corresponding time
         """
-        vx = []
-        vy = []
-        v = []
-        for i in self._velocityArray:
-            vx.append(i[0])
-            vy.append(i[1])
-            v.append(np.linalg.norm(i))
-            return self._distanceTimeArray, vx, vy, v
+        return self._distanceTimeArray, self._velArray, self._velxArray, self._velyArray
 
 
 # %%

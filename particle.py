@@ -360,6 +360,12 @@ class BallsArray():
         for ball in self.get_array()[:-1]:
             distance_array.append(np.linalg.norm(ball.pos() - center))
         return distance_array
+
+    def vel_all_balls(self):
+        vel_array = []
+        for ball in self.get_array()[:-1]:
+            vel_array.append(ball.vel())
+        return vel_array
 #%%
 
 timeInterval = 0.5
@@ -374,8 +380,9 @@ class Simulation():
         self._pressureTimeArray = []
 
         self._distanceTimeArray = []
-        self._distanceToCenter = [] #distances of balls to center
-        self._distanceToBalls = []  #distances of balls to balls
+        self._distanceToCenter = [] #distances of balls to center at each time
+        self._distanceToBalls = []  #distances of balls to balls at each time
+        self._velocityArray = [] #velocities of balls at each time
 
         self._errorCorrectionMode = False
 
@@ -432,6 +439,7 @@ class Simulation():
             self._distanceTimeArray.append(self._t)
             self._distanceToBalls.append(self._ballarray.dist_between_balls())
             self._distanceToCenter.append(self._ballarray.dist_to_center())
+            self._velocityArray.append(self._ballarray.vel_all_balls())
             
             for pair_index in pair_indices:
                 isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
@@ -500,6 +508,26 @@ class Simulation():
             list: Distance between balls and center at corresponding time.
         """
         return self._distanceTimeArray, self._distanceToBalls, self._distanceToCenter
+
+    def get_velocities(self):
+        """Returns time array, x component of velocity array, y component of velocity array,
+        and velocity magnitude array.
+        For example, vx[i] corresponds to tbhe x component of velocity at time distanceTimeArray[i].
+
+        Returns:
+            list: Time
+            list: x component of velocity at corresponding time
+            list: y component of velocity at corresponding time
+            list: velocity magnitude at corresponding time
+        """
+        vx = []
+        vy = []
+        v = []
+        for i in self._velocityArray:
+            vx.append(i[0])
+            vy.append(i[1])
+            v.append(np.linalg.norm(i))
+            return self._distanceTimeArray, vx, vy, v
 
 
 # %%

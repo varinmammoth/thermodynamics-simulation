@@ -383,9 +383,13 @@ class Simulation():
             KE.append(ball.kinetic())
         self._KE = KE
 
-    def next_collision(self):
+    def next_collision(self, histogram=True):
         """Performs the next collision. Also updates self._pressureTimeArray and
             self._pressureArray.
+        Args:
+            histogram (bool, optional): If set to True, velocity, inter-ball
+            distances, ball to center distance, etc will be availabe.
+            Set to False to save memory. Defaults to True.
         """
         #check for any overlaps and corrects them
         for pair in self._ballarray.get_all_pairs():
@@ -420,12 +424,13 @@ class Simulation():
             self._t += dt
             self._ballarray.move_balls(dt)
 
-            self._distanceTimeArray.append(self._t)
-            self._distanceToBalls.append(self._ballarray.dist_between_balls())
-            self._distanceToCenter.append(self._ballarray.dist_to_center())
-            self._velArray.append(self._ballarray.vel_all_balls()[0])
-            self._velxArray.append(self._ballarray.vel_all_balls()[1])
-            self._velyArray.append(self._ballarray.vel_all_balls()[2])
+            if histogram:
+                self._distanceTimeArray.append(self._t)
+                self._distanceToBalls.append(self._ballarray.dist_between_balls())
+                self._distanceToCenter.append(self._ballarray.dist_to_center())
+                self._velArray.append(self._ballarray.vel_all_balls()[0])
+                self._velxArray.append(self._ballarray.vel_all_balls()[1])
+                self._velyArray.append(self._ballarray.vel_all_balls()[2])
             
             for pair_index in pair_indices:
                 isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
@@ -456,7 +461,7 @@ class Simulation():
             self._delta_t = 0
             self._delta_p = 0
 
-    def run(self, num_frames, animate=False):
+    def run(self, num_frames, animate=False, histogram=True):
         if animate:
             f = pl.figure()
             ax = pl.axes(xlim=(-self._ballarray.get_array()[-1]._r, self._ballarray.get_array()[-1]._r), ylim=(-self._ballarray.get_array()[-1]._r, self._ballarray.get_array()[-1]._r))
@@ -464,10 +469,7 @@ class Simulation():
             for ball in self._ballarray.get_array()[0:-1]:
                 ax.add_patch(ball.get_patch())
         for frame in range(num_frames):
-            if debug:
-                print(' ')
-                print('frame: ' + str(frame))
-            self.next_collision()
+            self.next_collision(histogram)
             if animate:
                 ax.set_title(frame)
                 pl.pause(0.01)
@@ -483,30 +485,44 @@ class Simulation():
         """
         return self._pressureTimeArray, self._pressureArray
 
-    def get_distances(self):
+    def get_distances(self, histogram=True):
         """Returns time array, distance between balls array, and distances to center array.
         For example, distanceToBalls[i] is a list of distances between all balls at time 
         distanceTimeArray[i].
-
+        
+        Args:
+            histogram (bool, optional): Set histogram=False if histogram has not been generated during simulation run.
+            Defaults to True.
         Returns:
             list: Time
             list: Distance between all balls at corresponding time.
             list: Distance between balls and center at corresponding time.
         """
-        return self._distanceTimeArray, self._distanceToBalls, self._distanceToCenter
+        if histogram == False:
+            self._self._distanceToBalls = self._ballarray.dist_between_balls()
+            self._distanceToCenter = self._ballarray.dist_to_center()
+            return self._distanceToBalls, self._distanceToCenter
+        else:
+            return self._distanceTimeArray, self._distanceToBalls, self._distanceToCenter
 
-    def get_velocities(self):
+    def get_velocities(self, histogram=True):
         """Returns time array, x component of velocity array, y component of velocity array,
         and velocity magnitude array.
         For example, vx[i] corresponds to tbhe x component of velocity at time distanceTimeArray[i].
-
+        Args:
+            histogram (bool, optional): Set histogram=False if histogram has not been generated during simulation run.
+            Defaults to True.
         Returns:
             list: Time
             list: x component of velocity at corresponding time
             list: y component of velocity at corresponding time
             list: velocity magnitude at corresponding time
         """
-        return self._distanceTimeArray, self._velArray, self._velxArray, self._velyArray
+        if histogram == False:
+            self._velxArray, self._velyArray, self._velArray = self._ballarray.vel_all_balls()
+            return self._velArray, self._velxArray, self._velyArray
+        else:
+            return self._distanceTimeArray, self._velArray, self._velxArray, self._velyArray
 
 
 # %%

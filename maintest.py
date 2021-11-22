@@ -119,15 +119,15 @@ sensible pressure plot.
 """
 Testing the uniformly positioned but random velocity with fixed mean and s.d.
 """
-from math import comb
+# from math import comb
 
-num_balls = 100
-ballarray = p.BallsArray(container_r=20)
-ballarray.random_vel(num_balls, 0, 1, 1, 1)
-simulation = p.Simulation(ballarray)
-simulation.run(200, animate=False)
-timeDistance, ballsDistance, centerDistance = simulation.get_distances()
-timeVelocity, vx, vy, v = simulation.get_velocities()
+# num_balls = 100
+# ballarray = p.BallsArray(container_r=20)
+# ballarray.random_vel(num_balls, 0, 1, 1, 1)
+# simulation = p.Simulation(ballarray)
+# simulation.run(200, animate=False)
+# timeDistance, ballsDistance, centerDistance = simulation.get_distances()
+# timeVelocity, vx, vy, v = simulation.get_velocities()
 
 #Plots the time variation of distance between balls, and distance to center of container
 
@@ -151,31 +151,38 @@ timeVelocity, vx, vy, v = simulation.get_velocities()
 
 #Plots time variation of vx, vy and v
 
-for i in range(0, len(timeVelocity)):
-    vxHist = ps.get_histogram(vx[i], bins=20)
-    vyHist = ps.get_histogram(vy[i], bins=20)
-    vHist = ps.get_histogram(v[i], bins=20)
+# for i in range(0, len(timeVelocity)):
+#     vxHist = ps.get_histogram(vx[i], bins=20)
+#     vyHist = ps.get_histogram(vy[i], bins=20)
+#     vHist = ps.get_histogram(v[i], bins=20)
 
-    plt.subplot(1,3,1)
-    plt.bar(vxHist[0], vxHist[1])
-    plt.xlabel('vx')
-    plt.xlim((-3,3))
-    plt.ylim((0,num_balls/2))
+#     plt.subplot(1,3,1)
+#     plt.bar(vxHist[0], vxHist[1])
+#     plt.xlabel('vx')
+#     plt.xlim((-3,3))
+#     plt.ylim((0,num_balls/2))
     
-    plt.subplot(1,3,2)
-    plt.bar(vyHist[0], vyHist[1])
-    plt.xlabel('vy')
-    plt.xlim((-3,3))
-    plt.ylim((0,num_balls/2))
+#     plt.subplot(1,3,2)
+#     plt.bar(vyHist[0], vyHist[1])
+#     plt.xlabel('vy')
+#     plt.xlim((-3,3))
+#     plt.ylim((0,num_balls/2))
     
-    plt.subplot(1,3,3)
-    plt.bar(vHist[0], vHist[1])
-    plt.xlabel('v')
-    plt.xlim((0,3))
-    plt.ylim((0,num_balls/2))
-    plt.pause(0.001)
-    plt.clf()
-plt.show()
+#     plt.subplot(1,3,3)
+#     plt.bar(vHist[0], vHist[1])
+#     plt.xlabel('v')
+#     plt.xlim((0,3))
+#     plt.ylim((0,num_balls/2))
+#     plt.pause(0.001)
+#     plt.clf()
+# plt.show()
+
+ballarray = p.BallsArray()
+ballarray.manual_add_ball(p.Ball(1,1,[-7,0],[1,1]))
+ballarray.manual_add_container()
+test = p.Simulation(ballarray)
+test.run(300,animate=True)
+
 # %%
 """ 
 note to fix tmr:

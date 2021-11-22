@@ -125,7 +125,7 @@ num_balls = 20
 ballarray = p.BallsArray(container_r=20)
 ballarray.random_vel(num_balls, 0, 5, 1, 1)
 simulation = p.Simulation(ballarray)
-simulation.run(200, animate=True)
+simulation.run(2000, animate=True)
 timeDistance, ballsDistance, centerDistance = simulation.get_distances()
 timeVelocity, vx, vy, v = simulation.get_velocities()
 

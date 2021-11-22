@@ -27,6 +27,7 @@ def generate_points(N, ball_r, container_r):
         if goodball:
             points.append(point)
             n+=1
+    print('Random initialization of balls done.')
     return np.array(points)
 
 

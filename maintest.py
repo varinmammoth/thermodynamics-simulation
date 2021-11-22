@@ -71,7 +71,7 @@ Ball to ball collision in an arbritrary direction
 """
 # ballarray = p.BallsArray()
 # ballarray.manual_add_ball(p.Ball(1,1,[-3,-3],[1,1]))
-# ballarray.manual_add_ball(p.Ball(1,1,[0,0],[0,0], color='b'))
+# ballarray.manual_add_ball(p.Ball(1,1,[3,3],[-1,-1], color='b'))
 # ballarray.manual_add_container()
 # simulation = p.Simulation(ballarray)
 # simulation.run(10, animate=True)
@@ -89,10 +89,10 @@ Ball to ball collision, but balls have different masses.
 """
 Try an arbritrary number of balls with uniform mass and initial velocity.
 """
-# ballarray = p.BallsArray(container_r=20)
-# ballarray.uniform(20, [25,0], 1, 1)
-# simulation = p.Simulation(ballarray)
-# simulation.run(2000, animate=False)
+ballarray = p.BallsArray(container_r=20)
+ballarray.uniform(20, [25,0], 1, 1)
+simulation = p.Simulation(ballarray)
+simulation.run(200, animate=True)
 
 """
 Testing the simulation.get_pressure() function.
@@ -100,21 +100,21 @@ Experiment with various values of timeInterval in particle.py until get
 sensible pressure plot.
 
 """
-ballarray = p.BallsArray(container_r=20)
-ballarray.uniform(15, [25,0], 1, 1)
-simulation = p.Simulation(ballarray)
-simulation.run(200, animate=True)
-t, P = simulation.get_pressure()
-plt.plot(t, P, 'x')
-plt.xlabel('Time (s)')
-plt.ylabel('Pressure (Pa)')
-plt.show()
+# ballarray = p.BallsArray(container_r=20)
+# ballarray.uniform(15, [25,0], 1, 1)
+# simulation = p.Simulation(ballarray)
+# simulation.run(200, animate=True)
+# t, P = simulation.get_pressure()
+# plt.plot(t, P, 'x')
+# plt.xlabel('Time (s)')
+# plt.ylabel('Pressure (Pa)')
+# plt.show()
 
-center, hist, hist_err, hist_norm, hist_norm_err = ps.get_histogram(P)
-plt.bar(center, hist)
-plt.xlabel('Pressure (Pa)')
-plt.ylabel('Frequency')
-plt.show()
+# center, hist, hist_err, hist_norm, hist_norm_err = ps.get_histogram(P)
+# plt.bar(center, hist)
+# plt.xlabel('Pressure (Pa)')
+# plt.ylabel('Frequency')
+# plt.show()
 
 """
 Testing the uniformly positioned but random velocity with fixed mean and s.d.

@@ -6,11 +6,11 @@ import pylab as pl
 import generate_points as points
 
 debug = False
+kb = 1.38e-23
 
 class Ball():
     def __init__(self, m, r, p, v, type="ball", color='r'):
         """Initialises Ball object with all the nessecary attributes.
-
         Args:
             m (float): Mass of the object.
             r (float): Radius of the object.
@@ -33,7 +33,6 @@ class Ball():
 
     def pos(self):
         """Return current position of object.
-
         Returns:
             np.ndarray: Current position of object, in the form [x,y].
         """
@@ -41,7 +40,6 @@ class Ball():
 
     def vel(self):
         """Return current position of object.
-
         Returns:
             np.ndarray: Current velocity of object, in the form [vx, vy].
         """
@@ -49,15 +47,21 @@ class Ball():
 
     def vel_past(self):
         """Return velocity of object in the past iteration.
-
         Returns:
             np.ndarray: Velocity of object in previous iteration, in the form [vx, vy].
         """
         return self._v_past
 
+    def mass(self):
+        """Return mass of ball object.
+
+        Returns:
+            mass (float): Mass of ball object
+        """
+        return self._m
+
     def move(self, dt):
         """Updates the position of object to it's position dt seconds later.   
-
         Args:
             dt (float): Object's position is updated to the position dt seconds later.
         """
@@ -67,13 +71,12 @@ class Ball():
     
     def move_correct(self, dt):
         """Corrects the position of ball object in the case of overlap.
-
         Args:
             dt (float): Object's position is corrected tothe position dt seconds ago. dt is a negative
         """
         self._p = np.add(self._p, dt*self._v_past)
 
-    def correct_error(self, other, epsilon=1e-2):
+    def correct_error(self, other, epsilon=1e-3):
         if (self._type == "ball" and other._type == "ball"):
             R = self._r + other._r
         else:
@@ -94,10 +97,8 @@ class Ball():
 
     def time_to_collision(self, other):
         """Return the time to the next collision of self with another object of class Ball.
-
         Args:
             other (Ball): The other object self is colliding with.
-
         Returns:
             float: Time for self to collide with other. Returns None if objects do not collide.
         """
@@ -111,15 +112,13 @@ class Ball():
             R = self._r - other._r
 
         r = np.subtract(self.pos(), other.pos())
-        v = np.subtract(self.vel(), other.vel())
-        rdotv = np.dot(r,v)
-        vdotv = np.dot(v,v)
         
         def get_t(R):
-            #A list of length 2 with each of the solutions to the dt quadratic.
-            disc = np.sqrt(rdotv**2 - (vdotv)*(np.dot(r,r) - R**2))
-            t_array = [((-1*rdotv + disc))/vdotv,((-1*rdotv - disc))/vdotv]
-            return t_array
+                #A list of length 2 with each of the solutions to the dt quadratic.
+                disc = np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))
+                t_array = [((-np.dot(r,v) + disc))/np.dot(v,v),\
+                    ((-np.dot(r,v) - disc))/np.dot(v,v)]
+                return t_array
         
         def get_pos_real(t_array):
             #returns the smallest positive real solution
@@ -132,15 +131,43 @@ class Ball():
             else:
                 return None
 
-        t_array = get_t(R)
-        
-        time_to_collision = get_pos_real(t_array)
+        def get_neg_real(t_array):
+            #returns the largest negative real solution
+            t_array_real = []
+            for i in t_array:
+                if (np.isnan(i) == False) and (i < 0):
+                    t_array_real.append(i.real)
+
+            if len(t_array_real) != 0:
+                return np.max(t_array_real)
+            else:
+                return None
+
+        error = np.dot(r,r) - R**2
+
+        if self._type == 'ball' and other._type == 'ball':
+            if error < 0:
+                v = np.subtract(self.vel_past(), other.vel_past())
+                t_array = get_t(R)
+                time_to_collision = get_neg_real(t_array)
+            else:
+                v = np.subtract(self.vel(), other.vel())
+                t_array = get_t(R)
+                time_to_collision = get_pos_real(t_array)
+        else:
+            if error > 0:
+                v = np.subtract(self.vel_past(), other.vel_past())
+                t_array = get_t(R)
+                time_to_collision = get_neg_real(t_array)
+            else:
+                v = np.subtract(self.vel(), other.vel())
+                t_array = get_t(R)
+                time_to_collision = get_pos_real(t_array)
         
         return time_to_collision
             
     def collide(self, other):
         """Updates the velocities of self and other after they collide.
-
         Args:
             other (Ball): The other object self is colliding with.
         
@@ -189,7 +216,6 @@ class Ball():
 
     def get_patch(self):
         """Returns patch of ball for animation.
-
         Returns:
             Pylab patch: Pylab patch of ball for animation.
         """
@@ -210,7 +236,6 @@ class BallsArray():
 
     def get_array(self):
         """Return list with ball all ball objects. Last element is the container.
-
         Returns:
             list: List with all ball objects. Last element is the container.
         """
@@ -218,7 +243,6 @@ class BallsArray():
 
     def get_all_pairs(self):
         """Returns all pairings of ball-ball and ball-container.
-
         Returns:
             list: List of length (n+1)c2 containing all pairings (ie. includes container).
         """
@@ -236,13 +260,11 @@ class BallsArray():
     def uniform(self, n, v, m, r):
         """Creates a list with ball objects with uniform mass and velocity.
             To return the list, use self.get_array()
-
         Args:
             n (int): number of balls
             v (list): [x,y] initial velocities of balls
             m (float): mass of balls
             r (float): radius of ball
-
         Returns:
             list: list of length n containing ball objects of unifrom mass and velocity
             randomly distributed
@@ -261,13 +283,12 @@ class BallsArray():
         """Creates a list with ball objects with uniform mass and random velocities
             with average velocity v_avg and standard deviation sd.
             To return the list, use self.get_array()
-
         Args:
             n (int): number of balls
-            v (list): [x,y] average initial velocities of balls
+            v_avg (float): average initial velocity of the balls
+            sd (float): standard deviation of initial velocity
             m (float): mass of balls
             r (float): radius of ball
-
         Returns:
             list: list of length n containing ball objects of unifrom mass and velocity
             randomly distributed
@@ -314,6 +335,13 @@ class BallsArray():
             velx_array.append(ball.vel()[0])
             vely_array.append(ball.vel()[1])
         return (velx_array, vely_array, vel_array)
+
+    def energy(self):
+        energy_individual = []
+        for ball in self.get_array()[:-1]:
+            energy_individual.append(0.5*ball.mass()*np.linalg.norm(ball.vel()))
+        energy_total = np.sum(energy_individual)
+        return energy_total, energy_individual
 #%%
 
 timeInterval = 0.5
@@ -322,17 +350,20 @@ class Simulation():
         self._ballarray = ballarray
         self._t = 0
 
+        #below are attributes relating to histogram animation
         self._delta_p = 0 #change in momentume to calculate force
         self._delta_t = 0   #change in time to calculate force
         self._pressureArray = []
         self._pressureTimeArray = []
 
-        self._distanceTimeArray = []
+        self._generalTimeArray = []
         self._distanceToCenter = [] #distances of balls to center at each time
         self._distanceToBalls = []  #distances of balls to balls at each time
         self._velArray = [] #velocities magnitude of balls at each time
         self._velxArray = [] 
         self._velyArray = []
+        self._energy_total = [] #total energy at each time
+        self._energy_individual = [] #energy of individual balls at each time
 
         self._errorCorrectionMode = False
 
@@ -363,32 +394,53 @@ class Simulation():
             if (times_to_collision[i] == None) or (np.isnan(i)):
                 times_to_collision[i] = 1e15
 
-        dt = np.min(times_to_collision)
-        pair_indices = np.where(times_to_collision == dt)[0]
+        neg_times = []
+        pos_times = []
+        for i in times_to_collision:
+            if i < 0:
+                neg_times.append(i)
+            else:
+                pos_times.append(i)
+            
+        if len(neg_times) == 0:
+            dt = np.min(times_to_collision)
+            pair_indices = np.where(times_to_collision == dt)[0]
+        else:
+            dt = np.max(neg_times)
+            pair_indices = np.where(times_to_collision == dt)[0]
+            self._errorCorrectionMode = True
         
-        self._t += dt
-        self._ballarray.move_balls(dt)
+        if self._errorCorrectionMode == False:
+            self._t += dt
+            self._ballarray.move_balls(dt)
 
-        if histogram:
-            self._distanceTimeArray.append(self._t)
-            self._distanceToBalls.append(self._ballarray.dist_between_balls())
-            self._distanceToCenter.append(self._ballarray.dist_to_center())
-            self._velArray.append(self._ballarray.vel_all_balls()[0])
-            self._velxArray.append(self._ballarray.vel_all_balls()[1])
-            self._velyArray.append(self._ballarray.vel_all_balls()[2])
-        
-        for pair_index in pair_indices:
-            isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
+            if histogram:
+                self._generalTimeArray.append(self._t)
+                self._distanceToBalls.append(self._ballarray.dist_between_balls())
+                self._distanceToCenter.append(self._ballarray.dist_to_center())
+                self._velArray.append(self._ballarray.vel_all_balls()[0])
+                self._velxArray.append(self._ballarray.vel_all_balls()[1])
+                self._velyArray.append(self._ballarray.vel_all_balls()[2])
+                self._energy_total.append(self._ballarray.energy()[0])
+                self._energy_total.append(self._ballarray.energy()[1])
+            
+            for pair_index in pair_indices:
+                isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
+                if isContainer:
+                    #if ball collide with container, add 2*momentumBall to self._delta_p
+                    #but first, need to select which of the two in the pair is the ball
+                    if self._ballarray.get_all_pairs()[pair_index][0]._type == 'ball':
+                        ball = self._ballarray.get_all_pairs()[pair_index][0]
+                    else:
+                        ball = self._ballarray.get_all_pairs()[pair_index][1]
+                    self._delta_p += 2*ball.momentum()
             if isContainer:
-                #if ball collide with container, add 2*momentumBall to self._delta_p
-                #but first, need to select which of the two in the pair is the ball
-                if self._ballarray.get_all_pairs()[pair_index][0]._type == 'ball':
-                    ball = self._ballarray.get_all_pairs()[pair_index][0]
-                else:
-                    ball = self._ballarray.get_all_pairs()[pair_index][1]
-                self._delta_p += 2*ball.momentum()
-        if isContainer:
-            self._delta_t += dt
+                self._delta_t += dt
+        else:
+            for pair_index in pair_indices:
+                self._ballarray.get_all_pairs()[pair_index][0].move_correct(dt)
+                self._ballarray.get_all_pairs()[pair_index][1].move_correct(dt)
+            self._errorCorrectionMode = False
 
         # Whenever self._delta_t is greater than some value
         # timeInterval, self._delta_p and self._delta_t is used to calculate
@@ -418,7 +470,6 @@ class Simulation():
         
     def get_pressure(self):
         """Returns the time array and pressure array.
-
         Returns:
             list: Time.
             list: Pressure at corresponding time.
@@ -432,18 +483,18 @@ class Simulation():
         
         Args:
             histogram (bool, optional): Set histogram=False if histogram has not been generated during simulation run.
-            Defaults to True.
+            If False, returns arrays for last frame of simulation. Defaults to True.
         Returns:
             list: Time
             list: Distance between all balls at corresponding time.
             list: Distance between balls and center at corresponding time.
         """
         if histogram == False:
-            self._self._distanceToBalls = self._ballarray.dist_between_balls()
+            self._distanceToBalls = self._ballarray.dist_between_balls()
             self._distanceToCenter = self._ballarray.dist_to_center()
-            return self._distanceToBalls, self._distanceToCenter
+            return [self._t], self._distanceToBalls, self._distanceToCenter
         else:
-            return self._distanceTimeArray, self._distanceToBalls, self._distanceToCenter
+            return self._generalTimeArray, self._distanceToBalls, self._distanceToCenter
 
     def get_velocities(self, histogram=True):
         """Returns time array, x component of velocity array, y component of velocity array,
@@ -451,7 +502,7 @@ class Simulation():
         For example, vx[i] corresponds to tbhe x component of velocity at time distanceTimeArray[i].
         Args:
             histogram (bool, optional): Set histogram=False if histogram has not been generated during simulation run.
-            Defaults to True.
+            If False, returns arrays for last frame of simulation. Defaults to True.
         Returns:
             list: Time
             list: x component of velocity at corresponding time
@@ -460,9 +511,45 @@ class Simulation():
         """
         if histogram == False:
             self._velxArray, self._velyArray, self._velArray = self._ballarray.vel_all_balls()
-            return self._velArray, self._velxArray, self._velyArray
+            return [self._t], self._velArray, self._velxArray, self._velyArray
         else:
-            return self._distanceTimeArray, self._velArray, self._velxArray, self._velyArray
+            return self._generalTimeArray, self._velArray, self._velxArray, self._velyArray
 
+    def get_energies(self, histogram=True):
+        """Returns time array, total energy of the system array, and array of energy of individual balls.
+        For example, energy_individual[i] is a list of length n_balls containing kinetic energies of each ball.
 
+        Args:
+            histogram (bool, optional): Set histogram=False if histogram has not been generated during simulation run. 
+            If False, returns arrays for last frame of simulation. Defaults to True.
+
+        Returns:
+            list: Time
+            list: Array of total energy of system at corresponding time
+            list: Array of individual energies of balls at corresponding time
+        """
+        if histogram == False:
+            self._energy_total, self._energy_individual = self._ballarray.energy()
+            return [self._t], self._energy_total, self._energy_individual
+        else:
+            return self._generalTimeArray, self._energy_total, self._energy_individual
+
+    def get_temp(self, histogram=True):
+        """Returns temperature of the system.
+
+        Args:
+            histogram (bool, optional): Set histogram=False if histogram has not been generated during simulation run. 
+            If False, returns arrays for last frame of simulation. Defaults to True.
+
+        Returns:
+            list: Time
+            list: Array of temperature at corresponding time.
+        """
+        if histogram == False:
+            totalenergy = self.get_energies(histogram=False)[1]
+            temp = (2/3)*totalenergy/kb
+            return [self._t], temp
+        else:
+            temp = (2/3)*np.array(self._energy_total)/kb
+            return self._generalTimeArray, temp
 # %%

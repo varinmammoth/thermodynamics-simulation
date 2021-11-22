@@ -89,10 +89,10 @@ Ball to ball collision, but balls have different masses.
 """
 Try an arbritrary number of balls with uniform mass and initial velocity.
 """
-ballarray = p.BallsArray(container_r=20)
-ballarray.uniform(20, [25,0], 1, 1)
-simulation = p.Simulation(ballarray)
-simulation.run(200, animate=True)
+# ballarray = p.BallsArray(container_r=20)
+# ballarray.uniform(20, [25,0], 1, 1)
+# simulation = p.Simulation(ballarray)
+# simulation.run(200, animate=True)
 
 """
 Testing the simulation.get_pressure() function.
@@ -121,15 +121,15 @@ Testing the uniformly positioned but random velocity with fixed mean and s.d.
 """
 # from math import comb
 
-# num_balls = 100
-# ballarray = p.BallsArray(container_r=20)
-# ballarray.random_vel(num_balls, 0, 1, 1, 1)
-# simulation = p.Simulation(ballarray)
-# simulation.run(200, animate=False)
-# timeDistance, ballsDistance, centerDistance = simulation.get_distances()
-# timeVelocity, vx, vy, v = simulation.get_velocities()
+num_balls = 20
+ballarray = p.BallsArray(container_r=20)
+ballarray.random_vel(num_balls, 0, 5, 1, 1)
+simulation = p.Simulation(ballarray)
+simulation.run(200, animate=True)
+timeDistance, ballsDistance, centerDistance = simulation.get_distances()
+timeVelocity, vx, vy, v = simulation.get_velocities()
 
-#Plots the time variation of distance between balls, and distance to center of container
+# # Plots the time variation of distance between balls, and distance to center of container
 
 # for i in range(0,len(timeDistance)):
 #     ballsDistanceHist = ps.get_histogram(ballsDistance[i], bins=20)
@@ -149,7 +149,7 @@ Testing the uniformly positioned but random velocity with fixed mean and s.d.
 #     plt.clf()
 # plt.show()
 
-#Plots time variation of vx, vy and v
+# # Plots time variation of vx, vy and v
 
 # for i in range(0, len(timeVelocity)):
 #     vxHist = ps.get_histogram(vx[i], bins=20)

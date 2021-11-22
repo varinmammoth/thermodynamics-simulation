@@ -48,6 +48,11 @@ class Ball():
         return self._v
 
     def vel_past(self):
+        """Return velocity of object in the past iteration.
+
+        Returns:
+            np.ndarray: Velocity of object in previous iteration, in the form [vx, vy].
+        """
         return self._v_past
 
     def move(self, dt):
@@ -61,6 +66,11 @@ class Ball():
         self._patch.center = self._p
     
     def move_correct(self, dt):
+        """Corrects the position of ball object in the case of overlap.
+
+        Args:
+            dt (float): Object's position is corrected tothe position dt seconds ago. dt is a negative
+        """
         self._p = np.add(self._p, dt*self._v_past)
 
     def correct_error(self, other, epsilon=1e-3):
@@ -101,45 +111,13 @@ class Ball():
             R = self._r - other._r
 
         r = np.subtract(self.pos(), other.pos())
-        v = np.subtract(self.vel(), other.vel())
         
         def get_t(R):
-            #A list of length 2 with each of the solutions to the dt quadratic.
-            t_array = [((-np.dot(r,v) + np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v),\
-                 ((-np.dot(r,v) - np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v)]
-            return t_array
-        
-        def get_pos_real(t_array):
-            #returns the smallest positive real solution
-            t_array_real = []
-            for i in t_array:
-                if (np.isnan(i) == False) and (i > 0):
-                    t_array_real.append(i.real)
-
-            if len(t_array_real) != 0:
-                return np.min(t_array_real)
-            else:
-                return None
-
-        t_array = get_t(R)
-
-        error = np.dot(r,r) - R**2
-        if self._type == 'ball' and other._type == 'ball':
-            if error < 0:
-                v = np.subtract(self.vel_past(), other.vel_past())
-            else:
-                v = np.subtract(self.vel(), other.vel())
-        else:
-            if error > 0:
-                v = np.subtract(self.vel_past(), other.vel_past())
-            else:
-                v = np.subtract(self.vel(), other.vel())
-
-        def get_t(R):
-            #A list of length 2 with each of the solutions to the dt quadratic.
-            t_array = [((-np.dot(r,v) + np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v),\
-                 ((-np.dot(r,v) - np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))))/np.dot(v,v)]
-            return t_array
+                #A list of length 2 with each of the solutions to the dt quadratic.
+                disc = np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))
+                t_array = [((-np.dot(r,v) + disc))/np.dot(v,v),\
+                    ((-np.dot(r,v) - disc))/np.dot(v,v)]
+                return t_array
         
         def get_pos_real(t_array):
             #returns the smallest positive real solution
@@ -164,19 +142,27 @@ class Ball():
             else:
                 return None
 
-        t_array = get_t(R)
+        error = np.dot(r,r) - R**2
 
         if self._type == 'ball' and other._type == 'ball':
             if error < 0:
+                v = np.subtract(self.vel_past(), other.vel_past())
+                t_array = get_t(R)
                 time_to_collision = get_neg_real(t_array)
             else:
+                v = np.subtract(self.vel(), other.vel())
+                t_array = get_t(R)
                 time_to_collision = get_pos_real(t_array)
         else:
             if error > 0:
+                v = np.subtract(self.vel_past(), other.vel_past())
+                t_array = get_t(R)
                 time_to_collision = get_neg_real(t_array)
             else:
+                v = np.subtract(self.vel(), other.vel())
+                t_array = get_t(R)
                 time_to_collision = get_pos_real(t_array)
-
+        print(time_to_collision)
         return time_to_collision
             
     def collide(self, other):
@@ -445,6 +431,7 @@ class Simulation():
             if isContainer:
                 self._delta_t += dt
         else:
+            print('correct error')
             for pair_index in pair_indices:
                 self._ballarray.get_all_pairs()[pair_index][0].move_correct(dt)
                 self._ballarray.get_all_pairs()[pair_index][1].move_correct(dt)

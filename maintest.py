@@ -100,21 +100,21 @@ Experiment with various values of timeInterval in particle.py until get
 sensible pressure plot.
 
 """
-# ballarray = p.BallsArray(container_r=20)
-# ballarray.uniform(15, [25,0], 1, 1)
-# simulation = p.Simulation(ballarray)
-# simulation.run(200, animate=True)
-# t, P = simulation.get_pressure()
-# plt.plot(t, P, 'x')
-# plt.xlabel('Time (s)')
-# plt.ylabel('Pressure (Pa)')
-# plt.show()
+ballarray = p.BallsArray(container_r=20)
+ballarray.uniform(15, [25,0], 1, 1)
+simulation = p.Simulation(ballarray)
+simulation.run(10, animate=True)
+t, P = simulation.get_pressure()
+plt.plot(t, P, 'x')
+plt.xlabel('Time (s)')
+plt.ylabel('Pressure (Pa)')
+plt.show()
 
-# center, hist, hist_err, hist_norm, hist_norm_err = ps.get_histogram(P)
-# plt.bar(center, hist)
-# plt.xlabel('Pressure (Pa)')
-# plt.ylabel('Frequency')
-# plt.show()
+center, hist, hist_err, hist_norm, hist_norm_err = ps.get_histogram(P)
+plt.bar(center, hist)
+plt.xlabel('Pressure (Pa)')
+plt.ylabel('Frequency')
+plt.show()
 
 """
 Testing the uniformly positioned but random velocity with fixed mean and s.d.
@@ -176,12 +176,6 @@ Testing the uniformly positioned but random velocity with fixed mean and s.d.
 #     plt.pause(0.001)
 #     plt.clf()
 # plt.show()
-
-ballarray = p.BallsArray()
-ballarray.manual_add_ball(p.Ball(1,1,[-7,0],[1,1]))
-ballarray.manual_add_container()
-test = p.Simulation(ballarray)
-test.run(300,animate=True)
 
 # %%
 """ 

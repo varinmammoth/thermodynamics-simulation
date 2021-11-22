@@ -103,7 +103,7 @@ sensible pressure plot.
 ballarray = p.BallsArray(container_r=20)
 ballarray.uniform(15, [25,0], 1, 1)
 simulation = p.Simulation(ballarray)
-simulation.run(10, animate=True)
+simulation.run(200, animate=True)
 t, P = simulation.get_pressure()
 plt.plot(t, P, 'x')
 plt.xlabel('Time (s)')

@@ -70,13 +70,21 @@ class Ball():
         self._patch.center = self._p
     
     def move_correct(self, dt):
-        """Corrects the position of ball object in the case of overlap.
+        """Moves the ball in the opposite direction of it's previous movement by taking in a negative dt.
         Args:
             dt (float): Object's position is corrected tothe position dt seconds ago. dt is a negative
         """
         self._p = np.add(self._p, dt*self._v_past)
 
     def correct_error(self, other, epsilon=1e-3):
+        """A brute force approach to fixing overlaps. Ball is moved in the opposite direction of its
+        previous movement by an amount proportional to epsilon.
+
+        Args:
+            other (Ball Object): The other ball self has collided with.
+            epsilon (float, optional): The balls are moved backwards proportional to
+            this amount. Defaults to 1e-3.
+        """
         if (self._type == "ball" and other._type == "ball"):
             R = self._r + other._r
         else:
@@ -114,14 +122,30 @@ class Ball():
         r = np.subtract(self.pos(), other.pos())
         
         def get_t(R):
-                #A list of length 2 with each of the solutions to the dt quadratic.
-                disc = np.sqrt(np.dot(r,v)**2 - (np.dot(v,v))*(np.dot(r,r) - R**2))
-                t_array = [((-np.dot(r,v) + disc))/np.dot(v,v),\
-                    ((-np.dot(r,v) - disc))/np.dot(v,v)]
-                return t_array
+            """Returns the two solutions of the quadratic for finding time to next collision.
+
+            Args:
+                R (np.ndarray): A linear combination of the two ball objects' positions.
+
+            Returns:
+                list: List of length 2 with; each element is one of the solutions.
+            """
+            r_dot_v = np.dot(r,v)
+            v_dot_v = np.dot(v,v)
+            disc = np.sqrt(r_dot_v**2 - (v_dot_v)*(np.dot(r,r) - R**2))
+            t_array = [((-1*r_dot_v + disc))/v_dot_v,\
+                ((-1*r_dot_v - disc))/v_dot_v]
+            return t_array
         
         def get_pos_real(t_array):
-            #returns the smallest positive real solution
+            """Returns smallest positive and real solution. For use in general non-overlap cases.
+
+            Args:
+                t_array (list): Array of the two solutions to the dt quadratic.
+
+            Returns:
+                float: time to next collision
+            """
             t_array_real = []
             for i in t_array:
                 if (np.isnan(i) == False) and (i > 0):
@@ -132,7 +156,14 @@ class Ball():
                 return None
 
         def get_neg_real(t_array):
-            #returns the largest negative real solution
+            """Returns laragest negative and real solution. For use to correct overlap cases.
+
+            Args:
+                t_array (list): Array of the two solutions to the dt quadratic.
+
+            Returns:
+                float: (negative) time that makes the balls not overlap.
+            """
             t_array_real = []
             for i in t_array:
                 if (np.isnan(i) == False) and (i < 0):
@@ -174,7 +205,7 @@ class Ball():
         Returns:
             (bool): Returns true if the collision is a ball-container collision
         """
-        #before updating self._v, update self._v_past. Same for other.
+        #before updating self._v, update self._v_past. Same for other. Used for error correction.
         self._v_past = self.vel()
         other._v_past = other.vel()
         
@@ -222,14 +253,31 @@ class Ball():
         return self._patch
 
     def kinetic(self):
+        """Returns kinetic energy of the ball.
+
+        Returns:
+            float: Kinetic energy of the ball.
+        """
         return 0.5*self._m*(np.linalg.norm(self.vel())**2)
 
     def momentum(self):
+        """Returns momentum of the ball.
+
+        Returns:
+            float: Momentum of the ball.
+        """
         return self._m*(np.linalg.norm(self.vel()))
+
 
 # %%
 class BallsArray():
     def __init__(self, container_r=10):
+        """Initialises BallsArray with all the nessecary attributes. After initialising the class,
+        can now add balls either manually, or using one of the pre-written distributions.
+
+        Args:
+            container_r (float, optional): Radius of the container. Defaults to 10.
+        """
         self._ballarray = []
         self._container_r = container_r
         self._container = Ball(m=1e38, r=container_r, p=[0,0], v=[0,0], type="container")
@@ -246,13 +294,20 @@ class BallsArray():
         Returns:
             list: List of length (n+1)c2 containing all pairings (ie. includes container).
         """
-        #from stackoverflow
         return [(self._ballarray[i],self._ballarray[j]) for i in range(len(self._ballarray)) for j in range(i+1, len(self._ballarray))]
     
     def reset(self):
+        """Resets the BallsArray object to start from scratch. It will be as if this object were
+        just created.
+        """
         self._ballarray = []
 
     def move_balls(self, dt):
+        """Move all balls to a time dt in the future.
+
+        Args:
+            dt (float): Time increment to move the balls by.
+        """
         for ball in self._ballarray:
             if ball._type == 'ball':
                 ball.move(dt)
@@ -273,7 +328,6 @@ class BallsArray():
         
         p_array = points.generate_points(n, r, self._container_r)
 
-        #Create the ballarray
         for i in range (0,n):
             self._ballarray.append(Ball(m, r, [p_array[i][0], p_array[i][1]], v, type="ball"))
 
@@ -301,25 +355,43 @@ class BallsArray():
         for i in range(0,n):
             v.append([np.random.normal(v_avg, sd), np.random.normal(v_avg, sd)])
 
-        #Create the ballarray
         for i in range (0,n):
             self._ballarray.append(Ball(m, r, [p_array[i][0], p_array[i][1]], v[i], type="ball"))
 
         self._ballarray.append(self._container)
 
     def manual_add_ball(self, newBall):
+        """Manually add a single ball to the BallsArray object.
+        Care should be taken to first reset the BallsArray object to avoid confusion.
+
+        Args:
+            newBall (Ball Object): The ball object generated using the Ball class to be added to BallsArray.
+        """
         self._ballarray.append(newBall)
 
     def manual_add_container(self):
+        """Manually add the container to the BallsArray object.
+        Care should be taken to only add the container once all the balls have been manually added.
+        """
         self._ballarray.append(self._container)
 
     def dist_between_balls(self):
+        """Returns the distance between all pairs of balls in a list.
+
+        Returns:
+            list: List of all the distances between all pairs of balls.
+        """
         distance_array = []
         for pair in self.get_all_pairs()[:-1]:
             distance_array.append(np.linalg.norm(pair[1].pos() - pair[0].pos()))
         return distance_array
 
     def dist_to_center(self):
+        """Returns the distance of the balls to the center of the container in a list.
+
+        Returns:
+            list: List of all the distances of the balls to the center of the container.
+        """
         distance_array = []
         center = self.get_array()[-1].pos()
         for ball in self.get_array()[:-1]:
@@ -327,6 +399,14 @@ class BallsArray():
         return distance_array
 
     def vel_all_balls(self):
+        """Returns each component of velocity and magnitude of velocity at the instant in time this
+        function is called.
+
+        Returns:
+            list: x-component of velocities of all the balls at this instance in time.
+            list: y-component of velocities of all the balls at this instance in time.
+            list: Magnitude of velocities of all the balls at this instance in time.
+        """
         vel_array = []
         velx_array = []
         vely_array = []
@@ -334,13 +414,20 @@ class BallsArray():
             vel_array.append(np.linalg.norm(ball.vel()))
             velx_array.append(ball.vel()[0])
             vely_array.append(ball.vel()[1])
-        return (velx_array, vely_array, vel_array)
+        return velx_array, vely_array, vel_array
 
     def energy(self):
+        """Returns total energy and energy of individual balls and the instant in time this function
+        is called.
+
+        Returns:
+            float: Total kinetic energy of the system at this instance in time.
+            list: A list of the kinetic energy of each ball at this instance in time.
+        """
         energy_individual = []
         for ball in self.get_array()[:-1]:
-            energy_individual.append(0.5*ball.mass()*np.linalg.norm(ball.vel()))
-        energy_total = np.sum(energy_individual)
+            energy_individual.append(ball.kinetic())
+        energy_total = sum(energy_individual)
         return energy_total, energy_individual
 #%%
 
@@ -355,6 +442,7 @@ class Simulation():
         self._delta_t = 0   #change in time to calculate force
         self._pressureArray = []
         self._pressureTimeArray = []
+        self._KE = []
 
         self._generalTimeArray = []
         self._distanceToCenter = [] #distances of balls to center at each time
@@ -368,17 +456,22 @@ class Simulation():
         self._errorCorrectionMode = False
 
     def updateKE(self):
-        KE = []
-        for ball in self._ballarray:
-            KE.append(ball.kinetic())
-        self._KE = KE
+        kinetic = []
+        for ball in self._ballarray.get_array():
+            kinetic.append(ball.kinetic())
+        self._KE.append(sum(kinetic))
 
     def next_collision(self, histogram=True):
         """Performs the next collision. Also updates self._pressureTimeArray and
             self._pressureArray.
+
+            If histogram is set to True, various properties of the system will at each time will
+            be calculated, along with a list of the times the values correspond to. 
+            These can be returned using the corresponding functions. 
+            Turning this function off will save mememory.
         Args:
-            histogram (bool, optional): If set to True, velocity, inter-ball
-            distances, ball to center distance, etc will be availabe.
+            histogram (bool, optional): If set to True, velocity, inter-ball distances, ball to center 
+            distance, etc will be available to be returned using the corresponding functions.
             Set to False to save memory. Defaults to True.
         """
         #check for any overlaps and corrects them
@@ -415,6 +508,7 @@ class Simulation():
             self._ballarray.move_balls(dt)
 
             if histogram:
+                self.updateKE()
                 self._generalTimeArray.append(self._t)
                 self._distanceToBalls.append(self._ballarray.dist_between_balls())
                 self._distanceToCenter.append(self._ballarray.dist_to_center())
@@ -422,7 +516,7 @@ class Simulation():
                 self._velxArray.append(self._ballarray.vel_all_balls()[1])
                 self._velyArray.append(self._ballarray.vel_all_balls()[2])
                 self._energy_total.append(self._ballarray.energy()[0])
-                self._energy_total.append(self._ballarray.energy()[1])
+                self._energy_individual.append(self._ballarray.energy()[1])
             
             for pair_index in pair_indices:
                 isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
@@ -454,6 +548,16 @@ class Simulation():
             self._delta_p = 0
 
     def run(self, num_frames, animate=False, histogram=True):
+        """Function to run the whole simulation for a set number of frames. The abilities to display a
+        visual animation and store various properties during each iteration to later produce an animated
+        historgram is available.
+
+        Args:
+            num_frames (int): Number of frames to run the simulation for.
+            animate (bool, optional): Set to True to display a visual animation. Defaults to False.
+            histogram (bool, optional): Set to True to save various properties of the system during 
+            each iteration to be later used in an animated histogram.. Defaults to True.
+        """
         if animate:
             f = pl.figure()
             ax = pl.axes(xlim=(-self._ballarray.get_array()[-1]._r, self._ballarray.get_array()[-1]._r), ylim=(-self._ballarray.get_array()[-1]._r, self._ballarray.get_array()[-1]._r))

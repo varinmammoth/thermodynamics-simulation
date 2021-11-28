@@ -458,7 +458,7 @@ class Simulation():
         self._pressureTimeArray = []
         self._KETime = [True]
         self._KE = []
-        self._pressureCount = 0
+        self._total_delta_p = 0
 
         self._generalTimeArray = [] #time
         self._distanceToCenter = [] #distances of balls to center at each time
@@ -538,7 +538,6 @@ class Simulation():
             for pair_index in pair_indices:
                 isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
                 if isContainer:
-                    self._pressureCount +=1
                     #if ball collide with container, add 2*momentumBall to self._delta_p
                     #but first, need to select which of the two in the pair is the ball
                     if self._ballarray.get_all_pairs()[pair_index][0]._type == 'ball':
@@ -546,6 +545,7 @@ class Simulation():
                     else:
                         ball = self._ballarray.get_all_pairs()[pair_index][1]
                     self._delta_p += 2*ball.momentum()
+                    self._total_delta_p += 2*ball.momentum()
             if isContainer:
                 self._delta_t += dt
         else:
@@ -587,6 +587,7 @@ class Simulation():
             self.next_collision(histogram, timeInterval)
             if animate:
                 ax.set_title(frame)
+                print(frame)
                 pl.pause(0.01)
         if animate:
             pl.show()
@@ -675,4 +676,8 @@ class Simulation():
         else:
             temp = (2/3)*np.array(self._energy_total)/kb
             return self._generalTimeArray, temp
+
+    def whole_average_pressure(self):
+        pressure = (self._total_delta_p/self._t)/(2*np.pi*(self._ballarray.get_array()[-1]._r))
+        return pressure
 # %%

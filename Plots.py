@@ -80,7 +80,12 @@ plt.show()
 t, temp = simulation.get_temp()
 
 # %%
-sd_array = [5,10,15,20,25,30,35,40,45,50]
+""" 
+Changing the temperature by initialising velocity distribution of balls
+with different standard deviations.
+Use the results to make a T vs P plot.
+"""
+sd_array = [5,15,25,35,45,55,65]
 num_balls = 50
 histogram = False
 
@@ -120,11 +125,12 @@ for sd in sd_array:
 
 # %%
 plt.errorbar(avg_temp, avg_pressure, xerr=sd_temp, yerr=sd_pressure, fmt='.', capsize=2)
-fit, cov = np.polyfit(avg_temp, avg_pressure, deg=1, w=sd_temp, cov=True)
+fit, cov = np.polyfit(avg_temp, avg_pressure, deg=1, w=1/np.array(sd_temp), cov=True)
 line = np.poly1d(fit)
-plt.plot(np.linspace(0,70,1000), line(np.linspace(0,70,1000)))
+plt.plot(np.linspace(0,110,1000), line(np.linspace(0,110,1000)))
 plt.xlabel('Temperature (K)')
 plt.ylabel('Pressure (arbitrary units)')
+plt.grid()
 plt.show()
 
 # for i in range(0,len(v_centers)):
@@ -143,9 +149,71 @@ for i in range(0,len(v_centers)):
      plt.subplot(3,4,i+1)
      plt.bar(v_centers[i], v_counts[i], width=v_centers[i][2]-v_centers[i][1])
      plt.errorbar(v_centers[i], v_counts[i], yerr=v_counts_err[i], fmt='none', capsize=2, c='green')
-     plt.title(avg_temp[i])
+     plt.title(f'{avg_temp[i]:.3}')
      plt.xlim(0,130)
      plt.ylim(0,1)
-plt.legend()
 plt.show
+# %%
+""" 
+Doing the same as above (making P vs T plot) but instead of small balls,
+we increase the radii of balls.
+"""
+r_array = [0.25, 0.5, 1, 1.5]
+sd_array = [5,20,40,60,70]
+num_balls = 50
+histogram = False
+
+avg_pressure_r = []
+sd_pressure_r = []
+avg_temp_r = []
+sd_temp_r = []
+
+iteration = 1
+for radius in r_array:
+     avg_pressure = []
+     sd_pressure = []
+     avg_temp = []
+     sd_temp = []
+     
+     for sd in sd_array:
+          ballarray = p.BallsArray(container_r=20)
+          ballarray.random_vel(num_balls, 0, sd, 1e-26, radius) 
+          simulation = p.Simulation(ballarray)
+          simulation.run(500, animate=True, histogram=True, timeInterval=0.2)
+
+          # pressure_t, pressure = simulation.get_pressure()
+          # avg_pressure.append(np.mean(pressure))
+          # sd_pressure.append(np.std(pressure))
+          avg_pressure.append(simulation.whole_average_pressure())
+
+          t, temp = simulation.get_temp()
+          avg_temp.append(np.mean(temp))
+          sd_temp.append(np.std(temp))
+
+          print('Iteration', iteration)
+          iteration += 1
+
+          ballarray.reset()
+
+     avg_pressure_r.append(avg_pressure)
+     sd_pressure_r.append(sd_pressure_r)
+     avg_temp_r.append(avg_temp)
+     sd_temp_r.append(sd_temp_r)
+# %%
+color = ['red', 'green','blue','black','purple']
+for  i in range(0,len(avg_pressure_r)):
+     plt.plot(avg_temp_r[i], avg_pressure_r[i], 'o', label=r_array[i], c=color[i])
+     fit, cov = np.polyfit(avg_temp_r[i], avg_pressure_r[i], deg=1, cov=True)
+     line = np.poly1d(fit)
+     x = np.linspace(0,150,1000)
+     plt.plot(x, line(x), c=color[i])
+     plt.errorbar(avg_temp_r[i], avg_pressure_r[i], yerr=0.05*np.array(avg_pressure_r[i]), fmt='none', c=color[i], capsize=2)
+legend = plt.legend()
+legend.set_title('Radii')
+plt.xlabel('Temperature (K)')
+plt.ylabel('Pressure (abritrary units)')
+plt.grid()
+plt.show()
+
+
 # %%

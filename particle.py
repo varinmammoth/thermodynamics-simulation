@@ -418,7 +418,7 @@ class BallsArray():
         return velx_array, vely_array, vel_array
 
     def energy(self):
-        """Returns total energy and energy of individual balls and the instant in time this function
+        """Returns total energy and energy of individual balls at the instant in time this function
         is called.
 
         Returns:
@@ -430,9 +430,22 @@ class BallsArray():
             energy_individual.append(ball.kinetic())
         energy_total = sum(energy_individual)
         return energy_total, energy_individual
+
+    def momentum(self):
+        """Returns total momentum and momentum of individual balls at the instant in time this
+        function is called. 
+
+        Returns:
+            float: Total momentum of the system at this instace in time.
+            list. A list of the momentum of each ball at this instance in time.
+        """
+        momentum_individual = []
+        for ball in self.get_array()[:-1]:
+            momentum_individual.append(ball.momentum())
+        momentum_total = sum(momentum_individual)
+        return momentum_total, momentum_individual
 #%%
 
-timeInterval = 0.5
 class Simulation():
     def __init__(self, ballarray):
         self._ballarray = ballarray
@@ -445,6 +458,7 @@ class Simulation():
         self._pressureTimeArray = []
         self._KETime = [True]
         self._KE = []
+        self._pressureCount = 0
 
         self._generalTimeArray = [] #time
         self._distanceToCenter = [] #distances of balls to center at each time
@@ -464,7 +478,7 @@ class Simulation():
         self._KE.append(sum(kinetic))
         self._KETime.append(self._t)
 
-    def next_collision(self, histogram=True):
+    def next_collision(self, histogram=True, timeInterval=0.25):
         """Performs the next collision. Also updates self._pressureTimeArray and
             self._pressureArray.
 
@@ -524,6 +538,7 @@ class Simulation():
             for pair_index in pair_indices:
                 isContainer = self._ballarray.get_all_pairs()[pair_index][0].collide(self._ballarray.get_all_pairs()[pair_index][1])
                 if isContainer:
+                    self._pressureCount +=1
                     #if ball collide with container, add 2*momentumBall to self._delta_p
                     #but first, need to select which of the two in the pair is the ball
                     if self._ballarray.get_all_pairs()[pair_index][0]._type == 'ball':
@@ -550,7 +565,7 @@ class Simulation():
             self._delta_t = 0
             self._delta_p = 0
 
-    def run(self, num_frames, animate=False, histogram=True):
+    def run(self, num_frames, animate=False, histogram=True, timeInterval=0.25):
         """Function to run the whole simulation for a set number of frames. The abilities to display a
         visual animation and store various properties during each iteration to later produce an animated
         historgram is available.
@@ -560,6 +575,7 @@ class Simulation():
             animate (bool, optional): Set to True to display a visual animation. Defaults to False.
             histogram (bool, optional): Set to True to save various properties of the system during 
             each iteration to be later used in an animated histogram.. Defaults to True.
+            timeInterval (float): This time interval will be used in average pressure calculations.
         """
         if animate:
             f = pl.figure()
@@ -568,8 +584,7 @@ class Simulation():
             for ball in self._ballarray.get_array()[0:-1]:
                 ax.add_patch(ball.get_patch())
         for frame in range(num_frames):
-            self.next_collision(histogram)
-            print(frame)
+            self.next_collision(histogram, timeInterval)
             if animate:
                 ax.set_title(frame)
                 pl.pause(0.01)

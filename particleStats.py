@@ -18,3 +18,9 @@ def get_histogram(x, bins = 10):
     hist_norm_err = hist_err/np.linalg.norm(hist)
 
     return center, hist, hist_err, hist_norm, hist_norm_err
+
+def maxwell(v,m,T):
+    kb = 1.38e-23
+    maxwell = np.exp((-1*m*v*v)/(2*kb*T))
+    maxwell = maxwell*(m*v)/(kb*T)
+    return maxwell

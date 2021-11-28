@@ -14,7 +14,7 @@ def generate_points(N, ball_r, container_r):
     while n < N:
         goodball=True
         theta = random.uniform(0, 2*np.pi)
-        rho = random.uniform(0, container_r)
+        rho = container_r*np.sqrt(random.uniform(0, 1))
         x = rho*np.cos(theta)
         y = rho*np.sin(theta)
         point = np.array([x,y])

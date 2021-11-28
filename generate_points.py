@@ -13,10 +13,12 @@ def generate_points(N, ball_r, container_r):
     bounds = container_r - ball_r
     while n < N:
         goodball=True
-        x = random.uniform(-bounds, bounds)
-        y = random.uniform(-bounds, bounds)
+        theta = random.uniform(0, 2*np.pi)
+        rho = random.uniform(0, container_r)
+        x = rho*np.cos(theta)
+        y = rho*np.sin(theta)
         point = np.array([x,y])
-        if np.sqrt(x**2 + y**2) > 0.8*bounds:
+        if np.sqrt(x**2 + y**2) > 0.8*container_r:
             goodball=False
         if goodball==True:
             for i in points:

@@ -6,20 +6,20 @@ import particleStats as pstats
 
 sd_array = np.linspace(1,10,10)
 
-num_balls = 100
+num_balls = 200
 
 # for sd in sd_array:
 histogram = False
 ballarray = p.BallsArray(container_r=20)
-ballarray.random_vel(num_balls, 0, 1, 1, 1) 
+ballarray.random_vel(num_balls, 0, 5, 5, 0.25) 
 simulation = p.Simulation(ballarray)
-simulation.run(1000, animate=False, histogram=histogram)
+simulation.run(1, animate=True, histogram=True)
 
 if histogram == False:
     pressure_t, pressure = simulation.get_pressure()
     t, distballs, distcenter = simulation.get_distances(histogram=histogram)
     t, v, vx, vy = simulation.get_velocities(histogram=histogram)
-    t, Etotal, Esingle = simulation.get_energies(histogram=histogram)
+    t, Etotal, Esingle = simulation.get_energies(histogram=True)
 
     center, hist, hist_err, hist_norm, hist_norm_err\
          = pstats.get_histogram(pressure)
@@ -72,5 +72,11 @@ if histogram == False:
     plt.errorbar(center, hist_norm, yerr=hist_norm_err, capsize=2, fmt='none')
     plt.xlabel('vy')
     plt.show()
+
+plt.plot(t, Etotal, '.')
+plt.xlabel('Time (s)')
+plt.ylabel('Energy (J)')
+plt.show()
+# %%
 
 # %%

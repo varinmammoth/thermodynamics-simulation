@@ -5,6 +5,7 @@ import numpy as np
 import pylab as pl
 import generate_points as points
 
+np.random.seed(30)
 debug = False
 kb = 1.38e-23
 
@@ -431,7 +432,7 @@ class BallsArray():
         return energy_total, energy_individual
 #%%
 
-timeInterval = 5
+timeInterval = 0.5
 class Simulation():
     def __init__(self, ballarray):
         self._ballarray = ballarray
@@ -442,6 +443,8 @@ class Simulation():
         self._delta_t = 0   #change in time to calculate force
         self._pressureArray = []
         self._pressureTimeArray = []
+        self._KETime = [True]
+        self._KE = []
 
         self._generalTimeArray = [] #time
         self._distanceToCenter = [] #distances of balls to center at each time
@@ -453,6 +456,13 @@ class Simulation():
         self._energy_individual = [] #energy of individual balls at each time
 
         self._errorCorrectionMode = False
+
+    def updateKE(self):
+        kinetic = []
+        for ball in self._ballarray.get_array():
+            kinetic.append(ball.kinetic())
+        self._KE.append(sum(kinetic))
+        self._KETime.append(self._t)
 
     def next_collision(self, histogram=True):
         """Performs the next collision. Also updates self._pressureTimeArray and
@@ -499,6 +509,7 @@ class Simulation():
         if self._errorCorrectionMode == False:
             self._t += dt
             self._ballarray.move_balls(dt)
+            self.updateKE()
 
             if histogram:
                 self._generalTimeArray.append(self._t)

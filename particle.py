@@ -431,7 +431,7 @@ class BallsArray():
         return energy_total, energy_individual
 #%%
 
-timeInterval = 0.5
+timeInterval = 5
 class Simulation():
     def __init__(self, ballarray):
         self._ballarray = ballarray
@@ -442,24 +442,17 @@ class Simulation():
         self._delta_t = 0   #change in time to calculate force
         self._pressureArray = []
         self._pressureTimeArray = []
-        self._KE = []
 
-        self._generalTimeArray = []
+        self._generalTimeArray = [] #time
         self._distanceToCenter = [] #distances of balls to center at each time
         self._distanceToBalls = []  #distances of balls to balls at each time
         self._velArray = [] #velocities magnitude of balls at each time
-        self._velxArray = [] 
-        self._velyArray = []
+        self._velxArray = [] #velocities x-component of balls at each time
+        self._velyArray = [] #velocities y-component of balls at each time
         self._energy_total = [] #total energy at each time
         self._energy_individual = [] #energy of individual balls at each time
 
         self._errorCorrectionMode = False
-
-    def updateKE(self):
-        kinetic = []
-        for ball in self._ballarray.get_array():
-            kinetic.append(ball.kinetic())
-        self._KE.append(sum(kinetic))
 
     def next_collision(self, histogram=True):
         """Performs the next collision. Also updates self._pressureTimeArray and
@@ -508,7 +501,6 @@ class Simulation():
             self._ballarray.move_balls(dt)
 
             if histogram:
-                self.updateKE()
                 self._generalTimeArray.append(self._t)
                 self._distanceToBalls.append(self._ballarray.dist_between_balls())
                 self._distanceToCenter.append(self._ballarray.dist_to_center())
@@ -542,7 +534,7 @@ class Simulation():
         # to self._pressureArray, the time gets appended to self._pressureTimeArray,
         # then self._delta_p and self._delta_t is reset to 0.
         if self._delta_t > timeInterval:
-            self._pressureArray.append((self._delta_p/self._delta_t)/(2*np.pi*(self._ballarray.get_array()[-1]._r**2))) 
+            self._pressureArray.append((self._delta_p/self._delta_t)/(2*np.pi*(self._ballarray.get_array()[-1]._r))) 
             self._pressureTimeArray.append(self._t)
             self._delta_t = 0
             self._delta_p = 0
@@ -566,6 +558,7 @@ class Simulation():
                 ax.add_patch(ball.get_patch())
         for frame in range(num_frames):
             self.next_collision(histogram)
+            print(frame)
             if animate:
                 ax.set_title(frame)
                 pl.pause(0.01)
@@ -594,8 +587,8 @@ class Simulation():
             list: Distance between balls and center at corresponding time.
         """
         if histogram == False:
-            self._distanceToBalls = self._ballarray.dist_between_balls()
-            self._distanceToCenter = self._ballarray.dist_to_center()
+            self._distanceToBalls.append(self._ballarray.dist_between_balls())
+            self._distanceToCenter.append(self._ballarray.dist_to_center())
             return [self._t], self._distanceToBalls, self._distanceToCenter
         else:
             return self._generalTimeArray, self._distanceToBalls, self._distanceToCenter

@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 #random seed so we get reproducible results every single run
 #choice of 30 was arbitrary
-# random.seed(30)
+random.seed(30)
 
 def generate_points(N, ball_r, container_r):
     points = []

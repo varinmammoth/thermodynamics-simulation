@@ -361,6 +361,35 @@ class BallsArray():
 
         self._ballarray.append(self._container)
 
+    def brownian(self, n, v_avg, sd, m, r, brownian_r):
+        """Creates a list with ball objects with uniform mass and random velocities
+            with average velocity v_avg and standard deviation sd. The points will not
+            occupy the center of the container up to a radius r_brownian away to make
+            space for the Brownian particle.
+            To return the list, use self.get_array()
+        Args:
+            n (int): number of balls
+            v_avg (float): average initial velocity of the balls
+            sd (float): standard deviation of initial velocity
+            m (float): mass of balls
+            r (float): radius of ball
+            r_brownian (float): radius of the Brownian particle centered at origin.
+        Returns:
+            list: list of length n containing ball objects of unifrom mass and velocity
+            randomly distributed
+        """
+        
+        p_array = points.generate_points_brownian(n, r, self._container_r, brownian_r)
+
+        v = []
+        for i in range(0,n):
+            v.append([np.random.normal(v_avg, sd), np.random.normal(v_avg, sd)])
+
+        for i in range (0,n):
+            self._ballarray.append(Ball(m, r, [p_array[i][0], p_array[i][1]], v[i], type="ball"))
+
+        self._ballarray.append(self._container)
+
     def manual_add_ball(self, newBall):
         """Manually add a single ball to the BallsArray object.
         Care should be taken to first reset the BallsArray object to avoid confusion.
@@ -678,6 +707,11 @@ class Simulation():
             return self._generalTimeArray, temp
 
     def whole_average_pressure(self):
+        """Returns average pressure calculated over the whole duration of the simulation.
+
+        Returns:
+            float: Average pressure calculated over the whole duration of the simulation.
+        """
         pressure = (self._total_delta_p/self._t)/(2*np.pi*(self._ballarray.get_array()[-1]._r))
         return pressure
 # %%

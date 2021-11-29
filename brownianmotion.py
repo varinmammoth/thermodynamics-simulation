@@ -86,7 +86,7 @@ for sd in sd_array:
     atoms.brownian(50,0,sd,0.0001,0.25,6)
 
     brownian_motion = brownian_simulation(atoms)
-    brownian_motion.run(2500, animate=True, histogram=False)
+    brownian_motion.run(1000, animate=True, histogram=False)
 
     t, x, y = brownian_molecule.get_time_pos()
     time_temp.append(t)

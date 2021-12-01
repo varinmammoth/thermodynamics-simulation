@@ -123,9 +123,9 @@ Testing the uniformly positioned but random velocity with fixed mean and s.d.
 
 num_balls = 20
 ballarray = p.BallsArray(container_r=20)
-ballarray.random_vel(num_balls, 0, 5, 1, 1)
+ballarray.uniform(num_balls, [5,5], 1e-26, 0.5)
 simulation = p.Simulation(ballarray)
-simulation.run(2000, animate=True)
+simulation.run(1000, animate=True)
 timeDistance, ballsDistance, centerDistance = simulation.get_distances()
 timeVelocity, vx, vy, v = simulation.get_velocities()
 

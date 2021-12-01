@@ -10,7 +10,7 @@ random.seed(30)
 def generate_points(N, ball_r, container_r):
     points = []
     n = 0
-    bounds = container_r - ball_r
+    epsilon = 1e-1
     while n < N:
         goodball=True
         theta = random.uniform(0, 2*np.pi)
@@ -18,7 +18,7 @@ def generate_points(N, ball_r, container_r):
         x = rho*np.cos(theta)
         y = rho*np.sin(theta)
         point = np.array([x,y])
-        if np.sqrt(x**2 + y**2) > 0.8*container_r:
+        if np.sqrt(x**2 + y**2) > (container_r-ball_r-epsilon):
             goodball=False
         if goodball==True:
             for i in points:
@@ -43,7 +43,7 @@ def generate_points_brownian(N, ball_r, container_r, brownian_r):
         x = rho*np.cos(theta)
         y = rho*np.sin(theta)
         point = np.array([x,y])
-        if (np.sqrt(x**2 + y**2) > 0.8*container_r) or (np.sqrt(x**2 + y**2) < 2*brownian_r):
+        if (np.sqrt(x**2 + y**2) > 0.9*container_r) or (np.sqrt(x**2 + y**2) < 2*brownian_r):
             goodball=False
         if goodball==True:
             for i in points:

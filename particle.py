@@ -687,10 +687,11 @@ class Simulation():
         else:
             return self._generalTimeArray, self._energy_total, self._energy_individual
 
-    def get_temp(self, histogram=True):
+    def get_temp(self, N=50, histogram=True):
         """Returns temperature of the system.
 
         Args:
+            N(int): Number of balls in the simulation.
             histogram (bool, optional): Set histogram=False if histogram has not been generated during simulation run. 
             If False, returns arrays for last frame of simulation. Defaults to True.
 
@@ -700,10 +701,10 @@ class Simulation():
         """
         if histogram == False:
             totalenergy = self.get_energies(histogram=False)[1]
-            temp = (2/3)*totalenergy/kb
+            temp = totalenergy/(kb*N)
             return [self._t], temp
         else:
-            temp = (2/3)*np.array(self._energy_total)/kb
+            temp = np.array(self._energy_total)/(kb*N)
             return self._generalTimeArray, temp
 
     def whole_average_pressure(self):

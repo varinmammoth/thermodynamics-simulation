@@ -14,8 +14,10 @@ def get_histogram(x, bins = 10):
     center = (bins[:-1] + bins[1:]) / 2
     hist_err = np.sqrt(hist)
 
-    hist_norm = hist/np.linalg.norm(hist)
-    hist_norm_err = hist_err/np.linalg.norm(hist)
+    totalarea = np.sum((center[1]-center[0])*np.array(hist))
+
+    hist_norm = np.array(hist)/totalarea
+    hist_norm_err = (np.array(hist_err)/np.array(hist))*np.array(hist_norm)
 
     return center, hist, hist_err, hist_norm, hist_norm_err
 

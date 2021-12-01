@@ -2,6 +2,8 @@
 import particle as p
 import matplotlib.pyplot as plt
 import pylab as pl
+import numpy as np
+#%%
 
 class brownian_ball(p.Ball):
     def __init__(self,m,r,pos,v,type='ball',color='green'):
@@ -44,30 +46,30 @@ class brownian_simulation(p.Simulation):
         if animate:
             pl.show()
 
-brownian_molecule = brownian_ball(0.01, 5, [0,0], [0,0])
-atoms = p.BallsArray(container_r=20)
-atoms.manual_add_ball(brownian_molecule)
-atoms.brownian(50,0,5,0.0001,0.25,6)
+# brownian_molecule = brownian_ball(0.01, 5, [0,0], [0,0])
+# atoms = p.BallsArray(container_r=20)
+# atoms.manual_add_ball(brownian_molecule)
+# atoms.brownian(50,0,5,0.0001,0.25,6)
 
-brownian_motion = brownian_simulation(atoms)
-brownian_motion.run(1000, animate=True, histogram=False)
+# brownian_motion = brownian_simulation(atoms)
+# brownian_motion.run(1000, animate=True, histogram=False)
 # %%
-f = pl.figure()
-ax = pl.axes(xlim=(-20, 20), ylim=(-20, 20))
-ax.add_artist(pl.Circle([0,0], 20, fill=False))
-t, posx, posy = brownian_molecule.get_time_pos()
-ax.plot(posx,posy)
-pl.show()
+# f = pl.figure()
+# ax = pl.axes(xlim=(-20, 20), ylim=(-20, 20))
+# ax.add_artist(pl.Circle([0,0], 20, fill=False))
+# t, posx, posy = brownian_molecule.get_time_pos()
+# ax.plot(posx,posy)
+# pl.show()
 
-plt.subplot(1,2,1)
-plt.plot(t, posx)
-plt.xlabel('Time (s)')
-plt.ylabel('x')
-plt.subplot(1,2,2)
-plt.plot(t, posy)
-plt.xlabel('Time (s)')
-plt.ylabel('y')
-plt.show()
+# plt.subplot(1,2,1)
+# plt.plot(t, posx)
+# plt.xlabel('Time (s)')
+# plt.ylabel('x')
+# plt.subplot(1,2,2)
+# plt.plot(t, posy)
+# plt.xlabel('Time (s)')
+# plt.ylabel('y')
+# plt.show()
 # %%
 """ 
 Investigating effects of temperature on Brownian motion.
@@ -109,15 +111,26 @@ plt.show()
 plt.figure(figsize=(8, 4), dpi=80)
 for i in range(0,len(x_temp)):
     plt.subplot(1,2,1)
-    plt.plot(time_temp[i], x_temp[i], label=sd_array[i], c=colors[i])
+    plt.plot(time_temp[i], np.sqrt(np.array(x_temp[i])**2), label=sd_array[i], c=colors[i])
     plt.xlabel('Time (s)')
     plt.ylabel('x')
+    plt.xlim((0,4.8))
     plt.subplot(1,2,2)
-    plt.plot(time_temp[i], y_temp[i], label=sd_array[i], c=colors[i])
+    plt.plot(time_temp[i], np.sqrt(np.array(y_temp[i])**2), label=sd_array[i], c=colors[i])
     plt.xlabel('Time (s)')
     plt.ylabel('y')
+    plt.xlim((0,4.8))
     legend = plt.legend()
-    legend.set_title("Velocity sd")   
+    legend.set_title("Velocity sd")  
 plt.show()
 
+plt.figure(figsize=(8, 4), dpi=80)
+for i in range(0,len(x_temp)):
+    plt.plot(time_temp[i], np.sqrt(np.array(x_temp[i])**2 + np.array(y_temp[i])**2), label=sd_array[i], c=colors[i]) 
+    plt.xlabel('Time')
+    plt.ylabel('Distance from center')
+    plt.xlim((0,4.8))
+    legend = plt.legend()
+    legend.set_title("Velocity sd") 
+plt.show()
 # %%

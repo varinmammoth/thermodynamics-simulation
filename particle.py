@@ -1,4 +1,4 @@
-"""Module defining the particle object and its actions.
+"""Module containt the Ball object, BallArray object, and Simulation object.
 """
 #%%
 import numpy as np
@@ -10,6 +10,9 @@ debug = False
 kb = 1.38e-23
 
 class Ball():
+    """ 
+    A class to create and interact with the basic Ball object.
+    """
     def __init__(self, m, r, p, v, type="ball", color='r'):
         """Initialises Ball object with all the nessecary attributes.
         Args:
@@ -272,6 +275,9 @@ class Ball():
 
 # %%
 class BallsArray():
+    """ 
+    A class to create and interact with multiple Ball objects.
+    """
     def __init__(self, container_r=10):
         """Initialises BallsArray with all the nessecary attributes. After initialising the class,
         can now add balls either manually, or using one of the pre-written distributions.
@@ -476,7 +482,15 @@ class BallsArray():
 #%%
 
 class Simulation():
+    """ 
+    A class to run the simulation and manage the outputs.
+    """
     def __init__(self, ballarray):
+        """Initialises the simulation with the ball array.
+
+        Args:
+            ballarray (BallsArray object): A BallsArray object that has been completely created.
+        """
         self._ballarray = ballarray
         self._t = 0
 
@@ -501,6 +515,8 @@ class Simulation():
         self._errorCorrectionMode = False
 
     def updateKE(self):
+        """Updates the kinetic energy array self._KE at each instance of time it is called,
+        """
         kinetic = []
         for ball in self._ballarray.get_array():
             kinetic.append(ball.kinetic())

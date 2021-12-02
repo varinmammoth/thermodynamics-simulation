@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 
 import particleStats as ps
 
-plt.plot(1,1)
-plt.show()
 """ 
 # One ball collision with container in x axis
 # """
@@ -178,16 +176,6 @@ timeVelocity, vx, vy, v = simulation.get_velocities()
 # plt.show()
 
 # %%
-""" 
-note to fix tmr:
-when ball overlap with container, we get and error > 0.
-Then we go and get t_array, but the t_array has no negative solutions.
-This is because t_array was calculated using the new velocity after the collision,
-however we need to calculate t_array using the velocity from the previous iteration.
 
-note to fix:
-implement while loop to check and correct error:
-while there is an error: keep correcting
-"""
 
 # %%

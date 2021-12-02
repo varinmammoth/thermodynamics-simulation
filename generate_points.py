@@ -1,7 +1,6 @@
 #%%
 import random
 import numpy as np
-import matplotlib.pyplot as plt
 
 #random seed so we get reproducible results every single run
 #choice of 30 was arbitrary

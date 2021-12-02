@@ -1,12 +1,10 @@
 #%%
-from matplotlib import RcParams
 import numpy as np
 import matplotlib.pyplot as plt
 import particle as p
 import particleStats as pstats
 
 #%%
-
 num_balls = 50
 
 histogram = False
@@ -132,19 +130,14 @@ for sd in sd_array:
 
      ballarray.reset()
 # %%
-# plt.errorbar(avg_temp, avg_pressure, xerr=sd_temp, yerr=sd_pressure, fmt='.', capsize=2)
-# fit, cov = np.polyfit(avg_temp, avg_pressure, deg=1, w=1/np.array(sd_temp), cov=True)
-# line = np.poly1d(fit)
-# plt.plot(np.linspace(0,110,1000), line(np.linspace(0,110,1000)))
-# plt.xlabel('Temperature (K)')
-# plt.ylabel('Pressure (arbitrary units)')
-# plt.grid()
-# plt.show()
-
-# for i in range(0,len(v_centers)):
-#      plt.errorbar(v_centers[i], v_counts[i], yerr=v_counts_err[i], fmt='.', capsize=2, label=avg_temp[i])
-# plt.legend()
-# plt.show
+plt.errorbar(avg_temp, avg_pressure, xerr=sd_temp, yerr=sd_pressure, fmt='.', capsize=2)
+fit, cov = np.polyfit(avg_temp, avg_pressure, deg=1, cov=True)
+line = np.poly1d(fit)
+plt.plot(np.linspace(0,8,1000), line(np.linspace(0,8,1000)))
+plt.xlabel('Temperature (K)')
+plt.ylabel('Pressure (N m^-1)')
+plt.grid()
+plt.show()
 
 def maxwell(v,m,T):
     kb = 1.38e-23
@@ -299,120 +292,11 @@ plt.ylabel('b (m^2)')
 plt.grid()
 plt.show()
 print(fit, cov)
-# %%
-r_array = [10,20,30,40,50]
-sd_array = [5,20,40,60,70]
-num_balls = 50
-histogram = False
-
-avg_pressure_A = []
-sd_pressure_A = []
-avg_temp_A = []
-sd_temp_A = []
-
-iteration = 1
-for radius in r_array:
-     avg_pressure = []
-     sd_pressure = []
-     avg_temp = []
-     sd_temp = []
-     
-     for sd in sd_array:
-          ballarray = p.BallsArray(container_r=radius)
-          ballarray.random_vel(num_balls, 0, sd, 1e-26, 0.5) 
-          simulation = p.Simulation(ballarray)
-          simulation.run(500, animate=True, histogram=True, timeInterval=0.2)
-
-          # pressure_t, pressure = simulation.get_pressure()
-          # avg_pressure.append(np.mean(pressure))
-          # sd_pressure.append(np.std(pressure))
-          avg_pressure.append(simulation.whole_average_pressure())
-
-          t, temp = simulation.get_temp()
-          avg_temp.append(np.mean(temp))
-          sd_temp.append(np.std(temp))
-
-          print('Iteration', iteration)
-          iteration += 1
-
-          ballarray.reset()
-
-     avg_pressure_A.append(avg_pressure)
-     sd_pressure_A.append(sd_pressure)
-     avg_temp_A.append(avg_temp)
-     sd_temp_A.append(sd_temp)
-# %%
-R_array = [10,20,30,40,50]
-sd_array = [5,20,40,60,70]
-histogram = False
-
-avg_pressure_N = []
-sd_pressure_N = []
-avg_temp_N = []
-sd_temp_N = []
-
-num_balls_array = [50,100]
-
-iteration=1
-for num_balls in num_balls_array:
-     avg_pressure = []
-     sd_pressure = []
-     avg_temp = []
-     sd_temp = []
-     for sd in sd_array:
-          ballarray = p.BallsArray(container_r=30)
-          ballarray.random_vel(num_balls, 0, sd, 1e-26, 0.5) 
-          simulation = p.Simulation(ballarray)
-          simulation.run(500, animate=False, histogram=True, timeInterval=0.2)
-
-          # pressure_t, pressure = simulation.get_pressure()
-          # avg_pressure.append(np.mean(pressure))
-          # sd_pressure.append(np.std(pressure))
-          avg_pressure.append(simulation.whole_average_pressure())
-
-          t, temp = simulation.get_temp()
-          avg_temp.append(np.mean(temp))
-          sd_temp.append(np.std(temp))
-
-          print('Iteration', iteration)
-          iteration += 1
-
-          ballarray.reset()
-
-     avg_pressure_N.append(avg_pressure)
-     sd_pressure_N.append(sd_pressure)
-     avg_temp_N.append(avg_temp)
-     sd_temp_N.append(sd_temp)
-
-#%%
-def get_b(R, M1, M2, N1, N2):
-     A = np.pi*(R**2)
-     b = A*(((M1/N1)-(M2/N2))/(M1 - M2))
-     return b
-
-slope_array = []
-plt.figure(figsize=(4, 4), dpi=80)
-color=['red', 'blue']
-for i in range(0,len(num_balls_array)):
-     plt.plot(avg_temp_N[i], avg_pressure_N[i], 'o', label=num_balls_array[i], c=color[i])
-     fit, cov = np.polyfit(avg_temp_N[i], avg_pressure_N[i], deg=1, cov=True)
-     line = np.poly1d(fit)
-     x = np.linspace(0,500,1000)
-     plt.plot(x, line(x), c=color[i])
-     plt.errorbar(avg_temp_N[i], avg_pressure_N[i], yerr=0.05*np.array(avg_pressure_N[i]), fmt='none', c=color[i], capsize=2)
-     plt.xlim((0,400))
-     print(fit, cov)
-     slope_array.append(fit[0])
-legend = plt.legend()
-legend.set_title('Number of balls')
-plt.xlabel('Temperature (K)')
-plt.ylabel('Pressure (F m^-1)')
-plt.title('R=30')
-plt.grid()
-plt.show()
-b = get_b(30, slope_array[0], slope_array[1], num_balls_array[0], num_balls_array[1])
 
 # %%
+""" 
+Changing number of balls N and keeping temperature T constant.
+"""
 avg_pressure_N = []
 sd_pressure_N = []
 avg_temp_N = []
@@ -444,3 +328,38 @@ num_balls_array = [25,50,75,100,150,200,125]
 avg_pressure_N = [0.0024105882109667722,0.005017169094481611,0.009638686764183219,0.013188381972289822,0.024354199919639528,0.04070146064253679, 0.018546374953925766]
 plt.plot(num_balls_array, avg_pressure_N, '.')
 # %%
+#%%
+""" 
+Finding b.
+"""
+
+num_balls_array = [25,50,75,100,150,200,125,175,225]
+avg_pressure_N = [0.0024105882109667722,0.005017169094481611,0.009638686764183219,0.013188381972289822,0.024354199919639528,0.04070146064253679, 0.018546374953925766, 0.02919310791475456, 0.05202315815995248]
+plt.plot(num_balls_array, avg_pressure_N, '.')
+
+import scipy.optimize as sci
+
+#vanderwaals equation fit
+def vanderwaals(N,b):
+    kb = 1.38e-23
+    A=np.pi*(50**2)
+    T=3.623189410258068e+22
+    P = ((N*kb*T)/(A-N*b))
+    return P
+
+p0=[20]
+values, cov = sci.curve_fit(vanderwaals, num_balls_array, avg_pressure_N, p0=p0)
+
+#fit of first two points when ball radius negligible
+def line(x):
+    m=(avg_pressure_N[1]-avg_pressure_N[0])/(25)
+    return m*x
+
+x = np.linspace(0,240,1000)
+plt.errorbar(num_balls_array, avg_pressure_N, yerr=0.1*np.array(avg_pressure_N), fmt='.', capsize=2, c='black')
+plt.plot(x, line(x), label="Ideal gas")
+plt.plot(x, vanderwaals(x, *values), label="Van der Waals gas", c='red')
+plt.legend()
+plt.grid()
+plt.xlabel('Number of balls')
+plt.ylabel('Pressure (N m^-1)')

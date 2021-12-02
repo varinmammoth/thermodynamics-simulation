@@ -4,18 +4,38 @@ import matplotlib.pyplot as plt
 import pylab as pl
 import numpy as np
 #%%
-
 class brownian_ball(p.Ball):
+    """ 
+    A class to create the Brownain ball.
+    """
     def __init__(self,m,r,pos,v,type='ball',color='green'):
+        """Initialises brownian_ball object with all the nessecary attributes.
+        Args:
+            m (float): Mass of the object.
+            r (float): Radius of the object.
+            p (list): Initial x, y coordinates of object in a list of length 2.
+            v (list): Initial x, y components of object's velocity in a list of length 2.
+            type (str, optional): Type of the object, either "ball" or "container". Defaults to "ball".
+        """
         p.Ball.__init__(self,m,r,pos,v,type,color)
         self._time = []
         self._x = []
         self._y = []
 
     def get_time_pos(self):
+        """Returns the time, x position, and y postion array of the Brownian ball.
+
+        Returns:
+            list: Time array.
+            list: x position array.
+            list: y position array.
+        """
         return self._time, self._x, self._y
 
 class brownian_simulation(p.Simulation):
+    """ 
+    A class to simulate Brownian motion.
+    """
     def run(self, num_frames, animate=False, histogram=True, timeInterval=0.25):
         """Function to run the whole simulation for a set number of frames. The abilities to display a
         visual animation and store various properties during each iteration to later produce an animated
@@ -88,7 +108,7 @@ for sd in sd_array:
     atoms.brownian(50,0,sd,0.0001,0.25,6)
 
     brownian_motion = brownian_simulation(atoms)
-    brownian_motion.run(1000, animate=True, histogram=False)
+    brownian_motion.run(1000, animate=False, histogram=False)
 
     t, x, y = brownian_molecule.get_time_pos()
     time_temp.append(t)
@@ -105,7 +125,6 @@ ax.add_artist(pl.Circle([0,0], 20, fill=False))
 t, posx, posy = brownian_molecule.get_time_pos()
 for i in range(0,len(x_temp)):
     ax.plot(x_temp[i], y_temp[i], label=sd_array[i])
-ax.legend()
 plt.show()
 
 plt.figure(figsize=(8, 4), dpi=80)
@@ -127,10 +146,12 @@ plt.show()
 plt.figure(figsize=(8, 4), dpi=80)
 for i in range(0,len(x_temp)):
     plt.plot(time_temp[i], np.sqrt(np.array(x_temp[i])**2 + np.array(y_temp[i])**2), label=sd_array[i], c=colors[i]) 
-    plt.xlabel('Time')
-    plt.ylabel('Distance from center')
-    plt.xlim((0,4.8))
+    plt.xlabel('Time (s)')
+    plt.ylabel('Distance from center (m)')
+    plt.xlim((0,4.5))
     legend = plt.legend()
     legend.set_title("Velocity sd") 
+    plt.grid()
 plt.show()
 # %%
+

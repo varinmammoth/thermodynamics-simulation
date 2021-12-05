@@ -22,6 +22,16 @@ def get_histogram(x, bins = 10):
     return center, hist, hist_err, hist_norm, hist_norm_err
 
 def maxwell(v,m,T):
+    """Returns the value of the Maxwell-Boltzmann with input v.
+
+    Args:
+        v (float): Velocity
+        m (float): Mass
+        T (float): Temperautre
+
+    Returns:
+        float: Value of the Maxwell-Boltzmann function.
+    """
     kb = 1.38e-23
     maxwell = np.exp((-1*m*v*v)/(2*kb*T))
     maxwell = maxwell*(m*v)/(kb*T)

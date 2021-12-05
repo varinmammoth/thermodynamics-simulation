@@ -66,6 +66,9 @@ class brownian_simulation(p.Simulation):
         if animate:
             pl.show()
 
+"""
+Testing that Brownian motion works.
+"""
 # brownian_molecule = brownian_ball(0.01, 5, [0,0], [0,0])
 # atoms = p.BallsArray(container_r=20)
 # atoms.manual_add_ball(brownian_molecule)
@@ -73,7 +76,7 @@ class brownian_simulation(p.Simulation):
 
 # brownian_motion = brownian_simulation(atoms)
 # brownian_motion.run(1000, animate=True, histogram=False)
-# %%
+
 # f = pl.figure()
 # ax = pl.axes(xlim=(-20, 20), ylim=(-20, 20))
 # ax.add_artist(pl.Circle([0,0], 20, fill=False))

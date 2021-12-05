@@ -5,7 +5,10 @@ import particle as p
 import particleStats as pstats
 
 #%%
-num_balls = 50
+""" 
+Plot for the pressure graphs/histograms, inter-ball distance and center-ball disntace.
+"""
+num_balls = 300
 
 histogram = False
 ballarray = p.BallsArray(container_r=20)
@@ -91,6 +94,8 @@ plt.grid()
 Changing the temperature by initialising velocity distribution of balls
 with different standard deviations.
 Use the results to make a T vs P plot.
+
+Also plot Maxwell Boltzmann distribution for each temperature.
 """
 sd_array = [5,20,40,60,80,100,120]
 num_balls = 50
@@ -164,6 +169,10 @@ plt.show()
 """ 
 Doing the same as above (making P vs T plot) but instead of small balls,
 we increase the radii of balls.
+
+Then use the gradient to determine b (Van der Waals constant).
+
+Note: this takes a while to run. The output are stored as variables in the code below.
 """
 r_array = [0.25,0.5,1.0,1.5,1.75]
 sd_array = [5,20,40,60,70]
@@ -295,7 +304,9 @@ print(fit, cov)
 
 # %%
 """ 
-Changing number of balls N and keeping temperature T constant.
+Changing number of balls N and keeping temperature T constant to investigate Van der Waals equation.
+
+Note: this takes a while to run. The output are stored as variables in the code below.
 """
 avg_pressure_N = []
 sd_pressure_N = []
@@ -330,7 +341,7 @@ plt.plot(num_balls_array, avg_pressure_N, '.')
 # %%
 #%%
 """ 
-Finding b.
+Finding b from Van der Waals equation using Scipy.
 """
 
 num_balls_array = [25,50,75,100,150,200,125,175,225]

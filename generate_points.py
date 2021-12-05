@@ -7,6 +7,17 @@ import numpy as np
 random.seed(30)
 
 def generate_points(N, ball_r, container_r):
+    """A function to randomly generate N non overlapping ball positions given a ball anc container radius.
+
+    Args:
+        N (int): Number of balls.
+        ball_r (float): Radius of ball.
+        container_r (float): Radius of container.
+
+    Returns:
+        list: A list of N [x,y] coordinates that can be used to generate N non overlapping balls inside
+        the container.
+    """
     points = []
     n = 0
     epsilon = 1e-1
@@ -32,6 +43,20 @@ def generate_points(N, ball_r, container_r):
     return np.array(points)
 
 def generate_points_brownian(N, ball_r, container_r, brownian_r):
+    """A function to randomly generate N non overlapping ball positions given a ball anc container radius,
+    and also does not overlap with a central Brownian particle centered at the origin.
+
+    Args:
+        N (int): Number of balls.
+        ball_r (float): Radius of ball.
+        container_r (float): Radius of container.
+        brownian_r (float): Radius of the Brownian particle.
+
+    Returns:
+        list: A list of N [x,y] coordinates that can be used to generate N non overlapping balls inside
+        the container.
+    
+    """
     points = []
     n = 0
     bounds = container_r - ball_r
